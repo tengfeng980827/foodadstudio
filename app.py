@@ -33,7 +33,6 @@ import time
 load_dotenv()
 
 app = Flask(__name__)
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 UPLOAD_FOLDER = "uploads"
 OUTPUT_FOLDER = "outputs"
@@ -933,6 +932,9 @@ def build_banner_prompt(title, subtitle, price, badge, cta, scene):
     has_badge = bool(badge.strip())
     has_cta = bool(cta.strip())
 
+    # ==========================
+    # BANNER TEXT POSITION - KEEP ORIGINAL
+    # ==========================
     if has_title:
         if has_subtitle:
             rules.append(f'Main headline must be inside safe area, centered around X:270 Y:290: "{title}"')
@@ -963,10 +965,11 @@ Scene:
 
 FINAL OUTPUT:
 - Final banner must be 1080px wide x 600px tall.
-- The full 1080x600 canvas must be filled with a natural premium food advertising background.
+- The full 1080x600 canvas must be filled with one natural premium food advertising background.
 - No blurred side padding.
 - No duplicated background extension.
 - No borders.
+- No watermark.
 
 ABSOLUTE SAFE AREA RULE:
 - Canvas size: 1080px wide x 600px high.
@@ -985,8 +988,8 @@ VERY IMPORTANT:
 - Logo clean zone must stay at top-right: X 860 to 1060, Y 20 to 140.
 - Do not place any important object in Y 0 to Y 150.
 - Do not place any important object in Y 570 to Y 600.
-- Top 150px must be background only.
-- Bottom 30px must be background only.
+- Top 150px must be premium background only.
+- Bottom 30px must be premium background only.
 
 STRICT ELEMENT POSITION:
 - Food product center: X 760, Y 390.
@@ -1002,43 +1005,57 @@ STRICT ELEMENT POSITION:
 - If price is empty: no price, no price tag, no currency, no price placeholder.
 - Logo clean zone: X 860 to 1060, Y 20 to 140.
 
-AI DESIGN ALLOWED:
-- AI may design premium typography.
-- AI may design badge shape.
-- AI may design price style.
-- AI may design CTA button style.
-- But all of them must stay inside the safe area.
-- Do not move them outside the specified coordinates.
-- Do not place text in the top 150px danger area.
-- Do not place text in the bottom 30px danger area.
+BACKGROUND ART DIRECTION:
+- Create a realistic full-canvas premium restaurant / delivery campaign background.
+- Background must look intentional, not AI-random.
+- Use depth, soft bokeh, warm appetizing lighting, gentle table surface, and realistic shadows.
+- Left side behind title must be cleaner and less busy for readability.
+- Right side can have richer food atmosphere but must not enter the logo clean zone.
+- Avoid messy props.
+- Avoid random ingredients flying around.
+- Avoid fake labels, fake packaging, fake words, fake signs, fake brand marks.
+- No artificial colored blocks, no safe area boxes, no guide lines.
+
+FOOD COMPOSITION IMPROVEMENT:
+- Food should be appetizing, premium and realistic.
+- Food should occupy about 30% to 38% of banner width.
+- Food must be the visual hero, but not too zoomed in.
+- Keep the full food product visible as much as possible.
+- Do not crop the plate, bowl, box, cup, or important food parts.
+- Food product center should stay around X 760, Y 390.
+- Food can overlap natural background shadow only, not text elements.
+- Food must not cover title, subtitle, badge, price, CTA, or logo zone.
+- Food must stay away from the top-right logo clean zone.
+- Food must not enter X 820 to 1080 and Y 0 to 160.
+- No food, plate, bowl, ingredients, sauce, steam, smoke, garnish, or bright object may appear inside the logo zone.
+- Do not place food in top danger area.
+- Do not place food in bottom danger area.
+
+FOOD QUALITY:
+- Preserve the identity of the uploaded food.
+- Improve lighting, sharpness, plating feel and commercial appeal.
+- Make the food look more delicious, but do not transform it into another dish.
+- Add natural contact shadow under the food.
+- Add very subtle steam only when suitable.
+- Avoid plastic-looking food.
+- Avoid over-saturated colors.
+- Avoid unrealistic melted textures.
 
 LOGO CLEAN ZONE:
 - Logo will be overlaid later by code.
 - Logo final position is TOP-RIGHT CORNER.
 - Keep X 860 to 1060 and Y 20 to 140 completely clean.
 - Maintain clean negative space for the logo.
-- Background in this zone should remain simple and not busy.
+- Background in this zone should remain simple, dark/bright enough, and not busy.
 - Do not generate logo.
 - No food, no bowl, no plate, no ingredients, no smoke, no steam, no bright objects, no text, no badge, no price, no CTA, no decoration in this zone.
 
-FOOD RULE:
-- Food should be appetizing, premium and realistic.
-- Food should occupy about 26% to 34% of banner width.
-- If the uploaded food photo is large, zoomed-in, close-up, or cropped, automatically scale the food smaller before composing the banner.
-- Keep the full food product visible as much as possible.
-- Do not make the food too zoomed in.
-- Do not crop the food.
-- Food product center should stay around X 760, Y 390.
-- Food must stay away from the top-right logo clean zone.
-- Food must not enter X 820 to 1080 and Y 0 to 160.
-- No food, plate, bowl, ingredients, sauce, steam, smoke, garnish, or bright object may appear inside the logo zone.
-- Keep the top-right logo area clean and empty.
-- Do not place food in top danger area.
-- Do not place food in bottom danger area.
-- Food should not cover title, subtitle, badge, price, CTA, or logo zone.
-
-OPTIONAL ELEMENT RULE:
+TEXT AND OPTIONAL ELEMENT RULE:
 - Only generate elements that have user-provided text under USER TEXT.
+- Use ONLY the exact user-provided text.
+- Do not invent extra words.
+- Do not invent promo text.
+- Do not generate fake food delivery platform text.
 
 PRICE RULE:
 - If price text is provided, show the exact price text at X 545 Y 480.
@@ -1058,12 +1075,8 @@ CTA RULE:
 SUBTITLE RULE:
 - If subtitle text is empty, do NOT generate any subtitle, small caption, tagline, slogan, or secondary text.
 
-- Use ONLY the exact user-provided text.
-- Do not invent extra words.
-- Do not invent promo text.
-- Do not generate fake food delivery platform text.
-
 TYPOGRAPHY STYLE:
+- Keep the banner text behavior and text placement unchanged.
 - Premium food advertising typography.
 - Bold readable main title.
 - Elegant subtitle.
@@ -1088,6 +1101,11 @@ NEGATIVE PROMPT:
 - No safe area guide lines.
 - No colored guide boxes.
 - No watermark.
+- No fake brand logo.
+- No fake delivery platform UI.
+- No random labels.
+- No random words.
+- No duplicated food unless the uploaded product naturally contains multiple items.
 - No food, plate, bowl, ingredients, garnish, steam, smoke, or bright object inside X 820 to 1080 and Y 0 to 160.
 - Keep top-right logo zone clean for overlay.
 
@@ -1264,35 +1282,41 @@ PRODUCT DETECTION:
 - Keep the real food identity, ingredients, shape, color and texture.
 - Improve lighting and presentation, but do not change the dish into a different food.
 - Remove messy original background.
+- Do not add extra food that was not uploaded.
 
 BUNDLE COMPOSITION:
 {bundle_text}
 
 LAYOUT:
-- Main product should occupy about 62% to 74% of the image area.
-- Supporting optional products should occupy about 20% to 32% each.
+- Main product should occupy about 66% to 78% of the image area.
+- Supporting optional products should occupy about 20% to 30% each.
 - Supporting products must stay behind the main product and must not overpower it.
 - Main product should be visually dominant.
 - Keep natural realistic spacing.
 - Use a slight front angle or natural menu product angle.
+- Leave clean white margin around the full product.
 
 SHADOW AND DEPTH:
-- Add a soft natural light grey shadow under each item.
+- Add a soft natural light grey contact shadow under each item.
 - Shadow should be subtle, premium and realistic.
 - Do not use harsh black shadows.
-- Add very subtle contact shadow to make the products sit naturally on the white background.
+- Product must feel grounded on a clean studio surface.
+
+FOOD QUALITY:
+- Premium commercial food photography.
+- Bright clean studio lighting.
+- Appetizing, sharp, high quality.
+- Preserve natural food texture.
+- Avoid plastic-looking food.
+- Avoid over-smoothing.
+- Avoid over-saturated colors.
+- Suitable for GrabFood, Foodpanda, menu, ecommerce and POS product listing.
 
 FRESH HOT FOOD FEEL:
 - Add very subtle steam above hot food if suitable.
 - Steam must be light, elegant and realistic.
 - Do not overdo smoke.
 - No messy fog.
-
-STYLE:
-- Premium commercial food photography.
-- Bright clean studio lighting.
-- Appetizing, sharp, high quality.
-- Suitable for GrabFood, Foodpanda, menu, ecommerce and POS product listing.
 
 STRICT NEGATIVE RULES:
 - No text.
@@ -1310,7 +1334,6 @@ STRICT NEGATIVE RULES:
 - No duplicated products unless necessary for realistic composition.
 - No cropped product.
 """
-
 
 def generate_product_image(main_path, drink_path="", side_path=""):
     prompt = build_product_prompt(
