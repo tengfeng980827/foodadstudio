@@ -777,69 +777,55 @@ def resize_to_banner_size(image_path):
 
 def typography_rules():
     return """
-AI TYPOGRAPHY SYSTEM:
-- Typography must look like it was designed by a senior advertising art director.
-- Keep all existing title, subtitle, badge, price, CTA and logo positions unchanged.
-- Do not move title or subtitle outside their assigned coordinates.
-- Improve typography, font choice, hierarchy, spacing, readability and visual balance only.
-- Use premium food advertising typography.
-- Mobile thumbnail readability is critical.
+AI CREATIVE TYPOGRAPHY DIRECTION:
+- GPT Image 2 must generate the text as part of the artwork.
+- Keep the assigned text positions and safe area, but make the typography visually designed.
+- Text should look like custom premium food advertising lettering, not typed default font.
+- Create beautiful campaign typography with strong hierarchy and professional art direction.
+- Prioritize design aesthetics, premium food campaign feeling, and brand-advertising impact.
 
-MAIN TITLE TYPOGRAPHY:
-- Main title must be large, powerful, premium and readable.
-- Use bold condensed display font style when suitable.
-- If Chinese text is used, use premium modern Chinese display typography.
-- If English text is used, use bold premium sans serif display typography.
-- If mixed Chinese and English are used, balance both languages cleanly.
-- Apply professional kerning and optical spacing.
-- Avoid childish, cartoon, default, plain or cheap fonts.
-- Avoid random handwritten fonts unless the food scene strongly matches it.
-- Do not distort the text.
+MAIN TITLE:
+- Use custom expressive display typography.
+- Large, bold, premium, appetizing and memorable.
+- For Chinese text, use modern premium Chinese campaign lettering, not default system Chinese font.
+- For English text, use custom bold editorial / campaign lettering, not plain Arial-like sans serif.
+- Mixed Chinese and English should feel intentionally designed together.
+- AI may use elegant letter shaping, tasteful contrast, soft shadow, premium gradient, subtle highlight, layered depth and optical spacing.
+- The title should look designed by a senior F&B art director.
 
-MAIN TITLE VISUAL STYLE:
-- Strong hierarchy.
-- Clean advertising impact.
-- Subtle depth.
-- Soft natural shadow for contrast.
-- Mild highlight edge if needed.
-- Premium gradient allowed only if it improves readability.
-- No neon glow.
-- No heavy outline.
-- No 3D extrusion.
-- No messy text effects.
+SUBTITLE:
+- Elegant supporting typography.
+- Smaller than the title.
+- Premium editorial feeling.
+- Can use refined spacing and subtle styling.
 
-SUBTITLE TYPOGRAPHY:
-- Subtitle must be smaller than title.
-- Subtitle should feel elegant, clean and premium.
-- Use medium or light sans serif.
-- Add tasteful letter spacing.
-- Align subtitle visually with the title.
-- Subtitle must support the title, not compete with it.
-- Subtitle must remain easy to read.
+BADGE / PRICE / CTA:
+- Badge should be an AI-designed premium campaign element, not a simple rectangle.
+- Price should have premium advertising price treatment.
+- CTA should look like a designed food campaign button if provided.
 
-TEXT COLOR RULE:
-- AI should choose text color based on background and food color.
-- High contrast is required.
-- Use warm food-friendly tones where suitable.
-- Avoid rainbow colors.
-- Avoid low contrast.
-- Avoid colors that merge into the background.
+STYLE REFERENCES:
+- GrabFood hero campaign.
+- Foodpanda premium restaurant campaign.
+- McDonald's modern campaign typography.
+- Shake Shack campaign style.
+- Modern Korean / Japanese food advertising.
+- Apple-like clean hierarchy, but warmer and food-friendly.
 
-LAYOUT QUALITY:
-- Maintain clean visual hierarchy:
-  1. Main title
-  2. Subtitle
-  3. Badge
-  4. Price
-  5. CTA
+AVOID:
+- Default fonts.
+- Plain bold sans serif.
+- Cheap block fonts.
+- Ugly PPT-style typography.
+- Random messy text.
+- Extra words not provided by the user.
+
+IMPORTANT:
+- Use only user-provided text.
+- Keep text readable.
+- Keep text inside its assigned safe area.
 - Keep breathing space around text.
-- Avoid text touching food.
-- Avoid text touching logo area.
-- Avoid clutter.
-- Do not generate extra random words.
-- Use only user provided text.
 """
-
 
 def build_prompt(title, subtitle, price, badge, scene):
     rules = []
@@ -1077,13 +1063,17 @@ SUBTITLE RULE:
 
 TYPOGRAPHY STYLE:
 - Keep the banner text behavior and text placement unchanged.
-- Premium food advertising typography.
-- Bold readable main title.
-- Elegant subtitle.
-- High contrast.
-- Professional kerning.
-- Modern commercial food campaign style.
-- Mobile readable.
+- GPT Image 2 should generate the text as premium custom advertising lettering.
+- Do not use default fonts or plain typed-looking text.
+- Main headline should look like custom-designed F&B campaign typography.
+- Typography can be expressive, elegant, bold, layered and premium.
+- AI may design beautiful title lettering, badge shape, price style and CTA button.
+- Prioritize aesthetics, campaign feeling and visual impact while keeping readability.
+- Chinese text must look like premium modern Chinese campaign lettering, not generic system font.
+- English text must look like premium editorial / food campaign display typography.
+- Badge must look designed, not like a simple rectangle.
+- Price must look like a premium price treatment, not plain text.
+- CTA must look like a polished food campaign button.
 - No messy text.
 - No random text.
 
