@@ -1,5 +1,6 @@
 from flask import Flask, request, send_file, render_template, jsonify
 from openai import OpenAI
+import requests
 import os
 
 # ==========================
@@ -33,6 +34,10 @@ import time
 load_dotenv()
 
 app = Flask(__name__)
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 UPLOAD_FOLDER = "uploads"
 OUTPUT_FOLDER = "outputs"
@@ -1764,6 +1769,62 @@ def banner():
 </body>
 </html>
 """
+
+@app.route("/auth/register", methods=["POST"])
+def register():
+
+    try:
+
+        data = request.json
+
+        r = requests.post(
+            f"{SUPABASE_URL}/auth/v1/signup",
+            headers={
+                "apikey": SUPABASE_ANON_KEY,
+                "Content-Type": "application/json"
+            },
+            json={
+                "email": data["email"],
+                "password": data["password"]
+            }
+        )
+
+        return r.json(), r.status_code
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "error": str(e)
+        }, 500
+
+@app.route("/auth/login", methods=["POST"])
+def login():
+
+    try:
+
+        data = request.json
+
+        r = requests.post(
+            f"{SUPABASE_URL}/auth/v1/token?grant_type=password",
+            headers={
+                "apikey": SUPABASE_ANON_KEY,
+                "Content-Type": "application/json"
+            },
+            json={
+                "email": data["email"],
+                "password": data["password"]
+            }
+        )
+
+        return r.json(), r.status_code
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "error": str(e)
+        }, 500
 
 @app.route("/generate", methods=["POST"])
 def generate():
