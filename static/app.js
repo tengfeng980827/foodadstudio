@@ -143,3 +143,172 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/static/service-worker.js").catch(() => {});
   });
 }
+
+const loginOpenBtn = document.getElementById("loginOpenBtn");
+const authModal = document.getElementById("authModal");
+const authCloseBtn = document.getElementById("authCloseBtn");
+
+const loginTabBtn = document.getElementById("loginTabBtn");
+const registerTabBtn = document.getElementById("registerTabBtn");
+
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+
+const authMessage = document.getElementById("authMessage");
+
+const userBox = document.getElementById("userBox");
+const userEmailText = document.getElementById("userEmailText");
+const logoutBtn = document.getElementById("logoutBtn");
+
+function showAuthMessage(message) {
+  authMessage.textContent = message;
+  authMessage.classList.remove("hidden");
+}
+
+function clearAuthMessage() {
+  authMessage.textContent = "";
+  authMessage.classList.add("hidden");
+}
+
+function openAuthModal() {
+  clearAuthMessage();
+  authModal.classList.remove("hidden");
+}
+
+function closeAuthModal() {
+  authModal.classList.add("hidden");
+}
+
+function showLoginTab() {
+  loginTabBtn.classList.add("active");
+  registerTabBtn.classList.remove("active");
+  loginForm.classList.remove("hidden");
+  registerForm.classList.add("hidden");
+  clearAuthMessage();
+}
+
+function showRegisterTab() {
+  registerTabBtn.classList.add("active");
+  loginTabBtn.classList.remove("active");
+  registerForm.classList.remove("hidden");
+  loginForm.classList.add("hidden");
+  clearAuthMessage();
+}
+
+function saveSession(data, email) {
+  localStorage.setItem("food_ai_token", data.access_token || "");
+  localStorage.setItem("food_ai_refresh_token", data.refresh_token || "");
+  localStorage.setItem("food_ai_user_id", data.user?.id || "");
+  localStorage.setItem("food_ai_user_email", email || data.user?.email || "");
+  updateAuthUI();
+}
+
+function clearSession() {
+  localStorage.removeItem("food_ai_token");
+  localStorage.removeItem("food_ai_refresh_token");
+  localStorage.removeItem("food_ai_user_id");
+  localStorage.removeItem("food_ai_user_email");
+  updateAuthUI();
+}
+
+function getToken() {
+  return localStorage.getItem("food_ai_token") || "";
+}
+
+function getUserEmail() {
+  return localStorage.getItem("food_ai_user_email") || "";
+}
+
+function updateAuthUI() {
+  const token = getToken();
+  const email = getUserEmail();
+
+  if (token && email) {
+    loginOpenBtn.classList.add("hidden");
+    userBox.classList.remove("hidden");
+    userEmailText.textContent = email;
+  } else {
+    loginOpenBtn.classList.remove("hidden");
+    userBox.classList.add("hidden");
+    userEmailText.textContent = "";
+  }
+}
+
+loginOpenBtn?.addEventListener("click", openAuthModal);
+authCloseBtn?.addEventListener("click", closeAuthModal);
+
+authModal?.addEventListener("click", (e) => {
+  if (e.target === authModal) closeAuthModal();
+});
+
+loginTabBtn?.addEventListener("click", showLoginTab);
+registerTabBtn?.addEventListener("click", showRegisterTab);
+
+logoutBtn?.addEventListener("click", () => {
+  clearSession();
+  alert("已退出登录");
+});
+
+registerForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  clearAuthMessage();
+
+  const email = document.getElementById("registerEmail").value.trim();
+  const password = document.getElementById("registerPassword").value;
+
+  try {
+    const res = await fetch("/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.msg || data.error || data.message || "注册失败");
+    }
+
+    showAuthMessage("注册成功，请检查邮箱验证，或直接尝试登录。");
+    showLoginTab();
+    document.getElementById("loginEmail").value = email;
+  } catch (err) {
+    showAuthMessage("注册失败：" + err.message);
+  }
+});
+
+loginForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  clearAuthMessage();
+
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  try {
+    const res = await fetch("/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.msg || data.error || data.message || "登录失败");
+    }
+
+    saveSession(data, email);
+    closeAuthModal();
+    alert("登录成功");
+  } catch (err) {
+    showAuthMessage("登录失败：" + err.message);
+  }
+});
+
+updateAuthUI();
