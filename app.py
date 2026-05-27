@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, render_template
+from flask import Flask, request, send_file, render_template, jsonify
 from openai import OpenAI
 import os
 
@@ -1764,6 +1764,64 @@ def banner():
 </body>
 </html>
 """
+
+@app.route("/generate", methods=["POST"])
+def generate():
+    try:
+        title = request.form.get("title", "")
+        subtitle = request.form.get("subtitle", "")
+        price = request.form.get("price", "")
+        badge = request.form.get("badge", "")
+        scene = request.form.get("style", "auto")
+        size = request.form.get("size", "1080x600")
+
+        main_photo = request.files.get("food_image")
+        logo_file = request.files.get("logo")
+
+        if not main_photo or not main_photo.filename:
+            return jsonify({
+                "success": False,
+                "error": "Please upload food image."
+            }), 400
+
+        image_path = save_upload(main_photo, UPLOAD_FOLDER)
+
+        logo_path = ""
+        if logo_file and logo_file.filename:
+            logo_path = save_upload(logo_file, LOGO_FOLDER)
+
+        if size == "1080x1080":
+            filename = generate_poster_image(
+                image_path,
+                logo_path,
+                title,
+                subtitle,
+                price,
+                badge,
+                scene
+            )
+        else:
+            filename = generate_banner_image(
+                image_path,
+                logo_path,
+                title,
+                subtitle,
+                price,
+                badge,
+                "",
+                scene
+            )
+
+        return jsonify({
+            "success": True,
+            "image_url": f"/outputs/{filename}"
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 
 @app.route("/outputs/<filename>")
