@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>外卖生图</title>
+
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#ff7a1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="外卖生图" />
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <header class="topbar">
+      <div>
+        <h1>外卖生图</h1>
+        <p>一键生成高转化外卖头图 / Banner</p>
+      </div>
+      <button class="vip-btn">👑 开通会员</button>
+    </header>
+
+    <section class="hero-card">
+      <div class="hero-text">
+        <h2><span>AI</span>生成外卖头图</h2>
+        <p>输入资料，AI 帮你生成吸睛 Banner</p>
+        <button id="goCreateBtn" class="main-btn">✨ 开始生成</button>
+      </div>
+
+      <div class="hero-preview">
+        <div class="fake-banner">
+          <div class="fake-copy">
+            <strong>大满足</strong>
+            <span>双层牛肉堡</span>
+            <em>¥19.9 起</em>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="quick-grid">
+      <button data-tab="create">
+        <span>🖼️</span>
+        AI生图
+        <small>智能生成</small>
+      </button>
+      <button data-tab="templates">
+        <span>📚</span>
+        模板中心
+        <small>热门模板</small>
+      </button>
+      <button data-tab="copy">
+        <span>✍️</span>
+        智能文案
+        <small>吸睛标题</small>
+      </button>
+      <button data-tab="sizes">
+        <span>📐</span>
+        尺寸设置
+        <small>多平台适配</small>
+      </button>
+      <button data-tab="works">
+        <span>📁</span>
+        我的作品
+        <small>查看管理</small>
+      </button>
+    </section>
+
+    <main class="screen active" id="homeScreen">
+      <div class="section-title">
+        <h3>热门模板</h3>
+        <button data-tab="templates">查看更多 ›</button>
+      </div>
+
+      <div class="template-row">
+        <div class="template-card orange">
+          <strong>招牌推荐</strong>
+          <span>必点美味</span>
+        </div>
+        <div class="template-card green">
+          <strong>新品上市</strong>
+          <span>优惠尝鲜</span>
+        </div>
+        <div class="template-card red">
+          <strong>限时特惠</strong>
+          <span>满减活动</span>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <h3>常用尺寸</h3>
+      </div>
+
+      <div class="size-grid">
+        <button class="size-card selected" data-size="1080x600">
+          <strong>Grab 头图</strong>
+          <span>1080×600px</span>
+        </button>
+        <button class="size-card" data-size="900x500">
+          <strong>外卖 Banner</strong>
+          <span>900×500px</span>
+        </button>
+        <button class="size-card" data-size="1080x1080">
+          <strong>正方图</strong>
+          <span>1080×1080px</span>
+        </button>
+        <button class="size-card" data-size="custom">
+          <strong>自定义</strong>
+          <span>自由尺寸</span>
+        </button>
+      </div>
+    </main>
+
+    <main class="screen" id="createScreen">
+      <div class="page-head">
+        <h2>新建画布</h2>
+        <p>填写资料后，一键生成外卖头图</p>
+      </div>
+
+      <form id="generateForm" class="create-form">
+        <label>
+          选择尺寸
+          <select id="canvasSize" name="size">
+            <option value="1080x600">Grab 头图 1080×600</option>
+            <option value="900x500">外卖 Banner 900×500</option>
+            <option value="1080x1080">正方图 1080×1080</option>
+          </select>
+        </label>
+
+        <label>
+          主标题
+          <input id="titleInput" name="title" placeholder="例如：超值套餐 / 新品上市" required />
+        </label>
+
+        <label>
+          副标题，可选
+          <input id="subtitleInput" name="subtitle" placeholder="例如：吃货必点 / 今日限定" />
+        </label>
+
+        <label>
+          价格，可选
+          <input id="priceInput" name="price" placeholder="例如：RM19.90 / ¥29.9" />
+        </label>
+
+        <label>
+          Badge 标签，可选
+          <input id="badgeInput" name="badge" placeholder="例如：Must Try / 限时优惠" />
+        </label>
+
+        <label>
+          风格选择
+          <select id="styleInput" name="style">
+            <option value="premium">高级商业摄影风</option>
+            <option value="orange">橙色促销风</option>
+            <option value="fresh">清新健康风</option>
+            <option value="spicy">麻辣重口味风</option>
+            <option value="minimal">简洁高级风</option>
+          </select>
+        </label>
+
+        <label>
+          上传食物图片
+          <input id="foodImageInput" name="food_image" type="file" accept="image/*" />
+        </label>
+
+        <label>
+          上传 Logo，可选
+          <input id="logoInput" name="logo" type="file" accept="image/*" />
+        </label>
+
+        <button type="submit" class="generate-btn">
+          🚀 开始生成
+        </button>
+      </form>
+
+      <section class="result-card" id="resultCard">
+        <h3>生成结果</h3>
+        <div id="loadingBox" class="loading-box hidden">AI 正在生成中...</div>
+        <img id="resultImage" class="result-image hidden" />
+        <a id="downloadBtn" class="download-btn hidden" download="banner.png">下载图片</a>
+      </section>
+    </main>
+
+    <main class="screen" id="templatesScreen">
+      <div class="page-head">
+        <h2>模板中心</h2>
+        <p>选择一个风格，快速开始设计</p>
+      </div>
+
+      <div class="template-masonry">
+        <div class="big-template orange">超值套餐</div>
+        <div class="big-template green">轻食沙拉</div>
+        <div class="big-template red">限时秒杀</div>
+        <div class="big-template dark">匠心寿司</div>
+        <div class="big-template yellow">新品上市</div>
+        <div class="big-template spicy">麻辣香锅</div>
+      </div>
+    </main>
+
+    <main class="screen" id="worksScreen">
+      <div class="page-head">
+        <h2>我的作品</h2>
+        <p>最近生成的 Banner 会显示在这里</p>
+      </div>
+
+      <div id="worksList" class="works-list">
+        <div class="empty-state">
+          暂时还没有作品，先去生成第一张吧。
+        </div>
+      </div>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-tab="home">首页</button>
+      <button class="nav-item" data-tab="templates">模板</button>
+      <button class="nav-plus" data-tab="create">＋</button>
+      <button class="nav-item" data-tab="works">作品</button>
+      <button class="nav-item" data-tab="mine">我的</button>
+    </nav>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
