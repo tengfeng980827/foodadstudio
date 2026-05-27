@@ -7,7 +7,7 @@
 
   <link rel="stylesheet" href="/static/style.css" />
   <link rel="manifest" href="/static/manifest.json" />
-  <meta name="theme-color" content="#ff7a1a" />
+  <meta name="theme-color" content="#fff7ed" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="外卖生图" />
 </head>
@@ -15,107 +15,174 @@
 <body>
   <div class="app-shell">
 
-    <header class="topbar">
+    <header class="app-header">
       <div>
         <h1>外卖生图</h1>
         <p>一键生成高转化外卖头图 / Banner</p>
       </div>
-      <button class="vip-btn">👑 开通会员</button>
+      <button class="member-btn">👑 开通会员</button>
     </header>
 
-    <section class="hero-card">
-      <div class="hero-text">
+    <section class="hero-banner">
+      <div class="hero-left">
         <h2><span>AI</span>生成外卖头图</h2>
         <p>输入资料，AI 帮你生成吸睛 Banner</p>
-        <button id="goCreateBtn" class="main-btn">✨ 开始生成</button>
+        <button id="goCreateBtn" class="hero-btn">✨ 开始生成</button>
       </div>
 
-      <div class="hero-preview">
-        <div class="fake-banner real-food-banner">
-          <div class="fake-copy">
-            <strong>大满足</strong>
-            <span>双层牛肉堡</span>
-            <em>¥19.9 起</em>
-          </div>
+      <div class="hero-food-card">
+        <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=900&auto=format&fit=crop" alt="Food Banner" />
+        <div class="hero-food-copy">
+          <strong>大满足</strong>
+          <span>双层牛肉堡</span>
+          <em>¥19.9 起</em>
         </div>
       </div>
     </section>
 
-    <section class="quick-grid">
+    <section class="shortcut-card">
       <button data-tab="create">
-        <span>🖼️</span>
-        AI生图
+        <span class="icon orange">🖼️</span>
+        <strong>AI生图</strong>
         <small>智能生成</small>
       </button>
+
       <button data-tab="templates">
-        <span>📚</span>
-        模板中心
+        <span class="icon purple">📚</span>
+        <strong>模板中心</strong>
         <small>热门模板</small>
       </button>
-      <button data-tab="copy">
-        <span>✍️</span>
-        智能文案
+
+      <button data-tab="create">
+        <span class="icon green">✍️</span>
+        <strong>智能文案</strong>
         <small>吸睛标题</small>
       </button>
+
       <button data-tab="sizes">
-        <span>📐</span>
-        尺寸设置
+        <span class="icon blue">📐</span>
+        <strong>尺寸设置</strong>
         <small>多平台适配</small>
       </button>
+
       <button data-tab="works">
-        <span>📁</span>
-        我的作品
+        <span class="icon yellow">📁</span>
+        <strong>我的作品</strong>
         <small>查看管理</small>
       </button>
     </section>
 
     <main class="screen active" id="homeScreen">
-      <div class="section-title">
-        <h3>热门模板</h3>
+      <div class="section-headline">
+        <div>
+          <h3>热门模板</h3>
+        </div>
         <button data-tab="templates">查看更多 ›</button>
       </div>
 
-      <div class="template-row">
-        <div class="template-card orange">
-          <strong>招牌推荐</strong>
-          <span>必点美味</span>
-        </div>
-        <div class="template-card green">
-          <strong>新品上市</strong>
-          <span>优惠尝鲜</span>
-        </div>
-        <div class="template-card red">
-          <strong>限时特惠</strong>
-          <span>满减活动</span>
+      <div class="template-scroll">
+        <button class="mini-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600&auto=format&fit=crop" alt="">
+          <div>
+            <strong>冬日热辣</strong>
+            <span>火锅 · 促销</span>
+          </div>
+          <em>RM29.9</em>
+        </button>
+
+        <button class="mini-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?q=80&w=600&auto=format&fit=crop" alt="">
+          <div>
+            <strong>韩式炸鸡</strong>
+            <span>小吃 · 招牌</span>
+          </div>
+          <em>RM22.8</em>
+        </button>
+
+        <button class="mini-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1622597467836-f3285f2131b8?q=80&w=600&auto=format&fit=crop" alt="">
+          <div>
+            <strong>鲜果茶</strong>
+            <span>饮品 · 新品</span>
+          </div>
+          <em>RM12</em>
+        </button>
+
+        <button class="mini-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=600&auto=format&fit=crop" alt="">
+          <div>
+            <strong>匠心寿司</strong>
+            <span>日料 · 品质</span>
+          </div>
+          <em>RM39</em>
+        </button>
+      </div>
+
+      <div class="section-headline">
+        <div>
+          <h3>常用尺寸</h3>
         </div>
       </div>
 
-      <div class="section-title">
-        <h3>常用尺寸</h3>
-      </div>
-
-      <div class="size-grid">
-        <button class="size-card selected" data-size="1080x1080">
+      <div class="size-scroll">
+        <button class="size-option selected" data-size="1080x1080">
           <strong>外卖头图</strong>
           <span>1080×1080px</span>
+          <i>🖼️</i>
         </button>
-        <button class="size-card" data-size="1080x600">
-  <strong>外卖 Banner</strong>
-  <span>1080×600px</span>
-</button>
-        <button class="size-card" data-size="1080x1080">
-          <strong>正方图</strong>
+
+        <button class="size-option" data-size="1080x600">
+          <strong>外卖 Banner</strong>
+          <span>1080×600px</span>
+          <i>🌄</i>
+        </button>
+
+        <button class="size-option" data-size="1080x1080">
+          <strong>产品图</strong>
           <span>1080×1080px</span>
+          <i>🍱</i>
         </button>
-        <button class="size-card" data-size="custom">
-          <strong>自定义</strong>
-          <span>自由尺寸</span>
+
+        <button class="size-option" data-size="custom">
+          <strong>自定义尺寸</strong>
+          <span>自由大小</span>
+          <i>📄</i>
         </button>
+      </div>
+
+      <div class="section-headline">
+        <div>
+          <h3>最近作品</h3>
+        </div>
+        <button data-tab="works">全部作品 ›</button>
+      </div>
+
+      <div id="homeWorksList" class="recent-grid">
+        <div class="recent-card">
+          <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=600&auto=format&fit=crop" alt="">
+          <strong>双层牛肉堡头图</strong>
+          <span>今天 14:30</span>
+        </div>
+        <div class="recent-card">
+          <img src="https://images.unsplash.com/photo-1622597467836-f3285f2131b8?q=80&w=600&auto=format&fit=crop" alt="">
+          <strong>鲜橙多多饮品图</strong>
+          <span>今天 11:20</span>
+        </div>
+        <div class="recent-card">
+          <img src="https://images.unsplash.com/photo-1529042410759-befb1204b468?q=80&w=600&auto=format&fit=crop" alt="">
+          <strong>麻辣香锅头图</strong>
+          <span>昨天 16:45</span>
+        </div>
+        <div class="recent-card">
+          <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=600&auto=format&fit=crop" alt="">
+          <strong>寿司头图设计</strong>
+          <span>昨天 10:15</span>
+        </div>
       </div>
     </main>
 
     <main class="screen" id="createScreen">
-      <div class="page-head">
+      <div class="page-title">
         <h2>新建画布</h2>
         <p>填写资料后，一键生成外卖头图</p>
       </div>
@@ -124,9 +191,9 @@
         <label>
           选择尺寸
           <select id="canvasSize" name="size">
-            <option value="1080x1080">外卖头图 1080×1080</option>
-	<option value="1080x1080">产品图 1080×1080</option>
-	<option value="1080x600">Banner 1080×600</option>
+            <option value="1080x1080">Grab 头图 1080×1080</option>
+            <option value="1080x1080">产品图 1080×1080</option>
+            <option value="1080x600">Banner 1080×600</option>
           </select>
         </label>
 
@@ -153,17 +220,17 @@
         <label>
           风格选择
           <select id="styleInput" name="style">
-            <option value="premium">高级商业摄影风</option>
-            <option value="orange">橙色促销风</option>
-            <option value="fresh">清新健康风</option>
-            <option value="spicy">麻辣重口味风</option>
-            <option value="minimal">简洁高级风</option>
+            <option value="auto">自动匹配风格</option>
+            <option value="luxury">高级商业摄影风</option>
+            <option value="hawker">马来西亚档口风</option>
+            <option value="japanese">日式餐厅风</option>
+            <option value="plain">简洁高级风</option>
           </select>
         </label>
 
         <label>
           上传食物图片
-          <input id="foodImageInput" name="food_image" type="file" accept="image/*" />
+          <input id="foodImageInput" name="food_image" type="file" accept="image/*" required />
         </label>
 
         <label>
@@ -171,9 +238,7 @@
           <input id="logoInput" name="logo" type="file" accept="image/*" />
         </label>
 
-        <button type="submit" class="generate-btn">
-          🚀 开始生成
-        </button>
+        <button type="submit" class="generate-btn">🚀 开始生成</button>
       </form>
 
       <section class="result-card" id="resultCard">
@@ -185,23 +250,52 @@
     </main>
 
     <main class="screen" id="templatesScreen">
-      <div class="page-head">
+      <div class="page-title">
         <h2>模板中心</h2>
         <p>选择一个风格，快速开始设计</p>
       </div>
 
-      <div class="template-masonry">
-        <div class="big-template orange">超值套餐</div>
-        <div class="big-template green">轻食沙拉</div>
-        <div class="big-template red">限时秒杀</div>
-        <div class="big-template dark">匠心寿司</div>
-        <div class="big-template yellow">新品上市</div>
-        <div class="big-template spicy">麻辣香锅</div>
+      <div class="template-board">
+        <button class="large-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=900&auto=format&fit=crop" alt="">
+          <strong>超值套餐</strong>
+          <span>吃货必点</span>
+        </button>
+
+        <button class="large-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=900&auto=format&fit=crop" alt="">
+          <strong>轻食沙拉</strong>
+          <span>Fresh & Healthy</span>
+        </button>
+
+        <button class="large-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?q=80&w=900&auto=format&fit=crop" alt="">
+          <strong>限时秒杀</strong>
+          <span>仅限今日</span>
+        </button>
+
+        <button class="large-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=900&auto=format&fit=crop" alt="">
+          <strong>匠心寿司</strong>
+          <span>新鲜食材</span>
+        </button>
+
+        <button class="large-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1529042410759-befb1204b468?q=80&w=900&auto=format&fit=crop" alt="">
+          <strong>麻辣香锅</strong>
+          <span>超满足</span>
+        </button>
+
+        <button class="large-template" data-tab="create">
+          <img src="https://images.unsplash.com/photo-1562967914-608f82629710?q=80&w=900&auto=format&fit=crop" alt="">
+          <strong>新品上市</strong>
+          <span>New Arrival</span>
+        </button>
       </div>
     </main>
 
     <main class="screen" id="worksScreen">
-      <div class="page-head">
+      <div class="page-title">
         <h2>我的作品</h2>
         <p>最近生成的 Banner 会显示在这里</p>
       </div>
