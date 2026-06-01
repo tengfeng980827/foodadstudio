@@ -232,8 +232,7 @@ def optional_text_rules(title: str, subtitle: str, badge: str, price: str) -> st
     if not rules:
         return "No user text provided. Do not invent any words."
 
-    return "
-".join(rules)
+    return "\n".join(rules)
 
 
 def typography_rules() -> str:
