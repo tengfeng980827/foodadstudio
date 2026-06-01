@@ -18,7 +18,6 @@
       --brand-primary-soft-2: #B2EBF2;
       --brand-primary-glow: rgba(0, 172, 193, .18);
       --brand-secondary: #D22928;
-      --brand-secondary-soft: rgba(210, 41, 40, .08);
       --bg-soft: #F4FBFC;
       --text-dark: #111827;
     }
@@ -76,9 +75,7 @@
       color: #374151;
     }
 
-    .brand-text {
-      color: var(--brand-primary);
-    }
+    .brand-text { color: var(--brand-primary); }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-mid), var(--brand-primary-bright));
@@ -90,10 +87,15 @@
       transition: .2s ease;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
       transform: translateY(-1px);
       box-shadow: 0 20px 45px rgba(0,96,100,.32);
       filter: saturate(1.05);
+    }
+
+    .btn-primary:disabled {
+      opacity: .6;
+      cursor: not-allowed;
     }
 
     .btn-secondary {
@@ -106,10 +108,15 @@
       transition: .2s ease;
     }
 
-    .btn-secondary:hover {
+    .btn-secondary:hover:not(:disabled) {
       background: var(--brand-primary);
       color: white;
       transform: translateY(-1px);
+    }
+
+    .btn-secondary:disabled {
+      opacity: .45;
+      cursor: not-allowed;
     }
 
     .type-card {
@@ -127,9 +134,7 @@
       background: var(--brand-primary-soft);
     }
 
-    .type-card input:checked + div {
-      color: var(--brand-primary);
-    }
+    .type-card input:checked + div { color: var(--brand-primary); }
 
     .type-card:has(input:checked) {
       border: 2px solid var(--brand-primary);
@@ -164,19 +169,9 @@
       overflow: hidden;
     }
 
-    .stat-card {
-      border-top: 4px solid var(--brand-primary-mid);
-    }
-
-    .recent-blur {
-      filter: blur(10px);
-      transform: scale(1.02);
-    }
-
-    .lock-layer {
-      background: rgba(255,255,255,.70);
-      backdrop-filter: blur(3px);
-    }
+    .stat-card { border-top: 4px solid var(--brand-primary-mid); }
+    .recent-blur { filter: blur(10px); transform: scale(1.02); }
+    .lock-layer { background: rgba(255,255,255,.70); backdrop-filter: blur(3px); }
   </style>
 </head>
 
@@ -184,38 +179,27 @@
   <main class="min-h-screen px-4 py-5 md:px-8 md:py-8">
     <section class="mx-auto max-w-7xl">
 
-      <!-- Header -->
       <header class="glass sticky top-4 z-30 mb-6 flex items-center justify-between rounded-[28px] px-4 py-3 md:px-6">
         <div class="flex items-center gap-3">
-          <div class="brand-logo grid h-11 w-11 place-items-center rounded-2xl text-xl font-black text-white shadow-lg">
-            AI
-          </div>
+          <div class="brand-logo grid h-11 w-11 place-items-center rounded-2xl text-xl font-black text-white shadow-lg">AI</div>
           <div>
             <h1 class="text-lg font-black tracking-tight md:text-xl">Food AI Studio</h1>
             <p class="text-xs font-medium text-gray-500">Food Delivery Visuals</p>
           </div>
         </div>
 
-        <button class="btn-secondary px-4 py-3 text-sm">
-          Login / Register
-        </button>
+        <button type="button" class="btn-secondary px-4 py-3 text-sm">Login / Register</button>
       </header>
 
       <section class="grid gap-6 lg:grid-cols-[420px_1fr]">
-
-        <!-- Left Form -->
         <aside class="soft-card rounded-[32px] p-5 md:p-6">
           <div class="mb-6">
             <p class="brand-text mb-2 text-sm font-extrabold">Create professional food visuals</p>
             <h2 class="text-3xl font-black leading-tight tracking-tight md:text-4xl">生成高级外卖头图</h2>
-            <p class="mt-3 text-sm leading-6 text-gray-500">
-              上传食物图片，AI 自动识别并生成适合外卖平台、海报和产品图的专业视觉素材。
-            </p>
+            <p class="mt-3 text-sm leading-6 text-gray-500">上传食物图片，AI 自动识别并生成适合外卖平台、海报和产品图的专业视觉素材。</p>
           </div>
 
-          <form class="space-y-5" id="generateForm">
-
-            <!-- Visual Type -->
+          <form class="space-y-5" id="generateForm" enctype="multipart/form-data">
             <div>
               <label class="label">图片类型</label>
               <div class="grid grid-cols-3 gap-3">
@@ -245,7 +229,6 @@
               </div>
             </div>
 
-            <!-- Text Fields -->
             <div>
               <label class="label">主标题 *</label>
               <input class="field" name="title" placeholder="例如：香煎猪扒饭" required />
@@ -267,7 +250,6 @@
               </div>
             </div>
 
-            <!-- Style -->
             <div>
               <label class="label">风格</label>
               <select class="field" name="style">
@@ -280,19 +262,17 @@
               </select>
             </div>
 
-            <!-- Logo Upload Button -->
             <div>
               <label class="label">上传 Logo PNG Optional</label>
               <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <label class="upload-button inline-flex cursor-pointer items-center justify-center rounded-[18px] px-5 py-3 text-sm font-black shadow-sm transition">
-                  <input id="logoInput" type="file" name="logo" accept="image/png,image/jpeg,image/jpg" class="hidden">
+                  <input id="logoInput" type="file" name="logo" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden">
                   Upload Logo
                 </label>
                 <span id="logoStatus" class="text-sm font-semibold text-gray-400">Transparent PNG recommended</span>
               </div>
             </div>
 
-            <!-- Food Image Upload -->
             <div class="rounded-3xl bg-[#F2FBFC] p-4">
               <label class="label">上传食物图片 *</label>
               <label class="checker grid min-h-[132px] cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-[#B2EBF2] bg-white/70 p-4 text-center transition hover:border-[var(--brand-primary)] hover:bg-[#E0F7FA]">
@@ -304,28 +284,22 @@
               </label>
             </div>
 
-            <button type="submit" class="btn-primary w-full">
-              Generate Visuals
-            </button>
+            <button id="generateButton" type="submit" class="btn-primary w-full">Generate Visuals</button>
           </form>
         </aside>
 
-        <!-- Right Content -->
         <section class="space-y-6">
-
-          <!-- Live Preview -->
           <div class="soft-card rounded-[32px] p-4 md:p-6">
             <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h3 class="text-xl font-black">Live Preview</h3>
               </div>
               <div class="flex gap-2">
-                <button class="btn-secondary px-4 py-3 text-sm">Regenerate</button>
-                <button class="btn-primary px-4 py-3 text-sm">Download</button>
+                <button id="regenerateButton" type="button" class="btn-secondary px-4 py-3 text-sm" disabled>Regenerate</button>
+                <button id="downloadButton" type="button" class="btn-primary px-4 py-3 text-sm" disabled>Download</button>
               </div>
             </div>
 
-            <!-- Default empty preview before generation -->
             <div id="previewArea" class="preview-box checker relative grid place-items-center rounded-[28px] border border-[#B2EBF2] shadow-2xl">
               <div class="text-center">
                 <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg">
@@ -337,7 +311,6 @@
             </div>
           </div>
 
-          <!-- Stats -->
           <div class="grid gap-4 md:grid-cols-3">
             <div class="soft-card stat-card rounded-[26px] p-5">
               <p class="text-sm font-black text-gray-400">Today</p>
@@ -356,19 +329,17 @@
             </div>
           </div>
 
-          <!-- Recent Designs -->
           <div class="soft-card rounded-[32px] p-5 md:p-6">
             <div class="mb-4 flex items-center justify-between">
               <div>
                 <h3 class="text-xl font-black">Recent Designs</h3>
                 <p class="text-sm text-gray-500">生成过的作品可以这里查看。</p>
               </div>
-              <button class="btn-secondary px-4 py-3 text-sm">View All</button>
+              <button type="button" class="btn-secondary px-4 py-3 text-sm">View All</button>
             </div>
 
-            <!-- Change data-logged-in to true after login -->
             <div id="recentDesigns" data-logged-in="false" class="relative overflow-hidden rounded-3xl">
-              <div class="grid gap-4 md:grid-cols-3">
+              <div id="recentGrid" class="grid gap-4 md:grid-cols-3">
                 <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#B2EBF2] via-[#E0F7FA] to-white"></div>
                 <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#80DEEA] via-[#E0F7FA] to-white"></div>
                 <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#E0F7FA] via-white to-[#B2EBF2]"></div>
@@ -379,7 +350,7 @@
                   <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-lg">🔒</div>
                   <p class="text-lg font-black text-gray-900">Login to view your creations</p>
                   <p class="mt-1 text-sm text-gray-500">登录后可以查看清晰的历史作品</p>
-                  <button class="btn-primary mt-4 px-5 py-3 text-sm">Login / Register</button>
+                  <button type="button" class="btn-primary mt-4 px-5 py-3 text-sm">Login / Register</button>
                 </div>
               </div>
             </div>
@@ -397,6 +368,11 @@
     const foodImageInput = document.getElementById('foodImageInput');
     const foodImageText = document.getElementById('foodImageText');
     const foodImageSubText = document.getElementById('foodImageSubText');
+    const generateButton = document.getElementById('generateButton');
+    const regenerateButton = document.getElementById('regenerateButton');
+    const downloadButton = document.getElementById('downloadButton');
+
+    let latestDownloadUrl = '';
 
     logoInput.addEventListener('change', function () {
       if (logoInput.files && logoInput.files[0]) {
@@ -420,26 +396,102 @@
       }
     });
 
+    function setLoadingState() {
+      generateButton.disabled = true;
+      generateButton.textContent = 'Generating...';
+      regenerateButton.disabled = true;
+      downloadButton.disabled = true;
+
+      previewArea.className = 'preview-box checker relative grid place-items-center rounded-[28px] border border-[#B2EBF2] shadow-2xl';
+      previewArea.innerHTML = `
+        <div class="text-center px-6">
+          <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg">
+            <span class="text-2xl">⏳</span>
+          </div>
+          <p class="text-xl font-black text-gray-800">Generating...</p>
+          <p class="mt-2 text-sm font-medium text-gray-400">AI is creating your food visual. This may take a while.</p>
+        </div>
+      `;
+    }
+
+    function resetButtonState() {
+      generateButton.disabled = false;
+      generateButton.textContent = 'Generate Visuals';
+    }
+
+    function showError(message) {
+      previewArea.className = 'preview-box checker relative grid place-items-center rounded-[28px] border border-[#B2EBF2] shadow-2xl';
+      previewArea.innerHTML = `
+        <div class="text-center px-6">
+          <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg">
+            <span class="text-2xl">⚠️</span>
+          </div>
+          <p class="text-xl font-black text-red-600">Generate Failed</p>
+          <p class="mt-2 text-sm font-medium text-gray-500">${message}</p>
+        </div>
+      `;
+    }
+
+    function showGeneratedImage(imageUrl, downloadUrl) {
+      latestDownloadUrl = downloadUrl || imageUrl;
+
+      previewArea.className = 'preview-box relative overflow-hidden rounded-[28px] border border-[#B2EBF2] shadow-2xl bg-white';
+      previewArea.innerHTML = `
+        <img src="${imageUrl}?t=${Date.now()}" class="h-full w-full object-contain bg-white" alt="Generated food visual" />
+      `;
+
+      regenerateButton.disabled = false;
+      downloadButton.disabled = false;
+    }
+
+    async function generateVisual() {
+      if (!foodImageInput.files || !foodImageInput.files[0]) {
+        showError('Please upload food image first.');
+        return;
+      }
+
+      setLoadingState();
+
+      try {
+        const formData = new FormData(form);
+
+        const response = await fetch('/generate', {
+          method: 'POST',
+          body: formData
+        });
+
+        let data;
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          throw new Error('Server did not return JSON. Please check Railway logs.');
+        }
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Generate failed.');
+        }
+
+        showGeneratedImage(data.image_url, data.download_url);
+      } catch (error) {
+        showError(error.message || 'Generate failed.');
+      } finally {
+        resetButtonState();
+      }
+    }
+
     form.addEventListener('submit', function (event) {
       event.preventDefault();
+      generateVisual();
+    });
 
-      const title = form.title.value.trim() || 'Food Visual';
-      const subtitle = form.subtitle.value.trim();
-      const badge = form.badge.value.trim();
-      const price = form.price.value.trim();
+    regenerateButton.addEventListener('click', function () {
+      generateVisual();
+    });
 
-      previewArea.className = 'preview-box relative overflow-hidden rounded-[28px] border border-[#B2EBF2] shadow-2xl bg-gradient-to-br from-[#00393C] via-[#006064] to-[#00ACC1]';
-      previewArea.innerHTML = `
-        <div class="absolute inset-0 opacity-40" style="background: radial-gradient(circle at 72% 58%, rgba(255,255,255,.92), transparent 22%), radial-gradient(circle at 26% 35%, rgba(0,172,193,.65), transparent 26%);"></div>
-        <div class="absolute right-8 top-8 rounded-2xl bg-white/92 px-5 py-3 text-lg font-black text-gray-900 shadow-lg">LOGO</div>
-        <div class="absolute left-[7%] top-[30%] max-w-[48%]">
-          ${badge ? `<p class="mb-4 inline-flex rounded-full bg-[#D22928] px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-lg">${badge}</p>` : ''}
-          <h2 class="text-4xl font-black leading-tight tracking-tight text-white drop-shadow-lg md:text-6xl">${title}</h2>
-          ${subtitle ? `<p class="mt-4 text-lg font-bold text-cyan-50 drop-shadow md:text-2xl">${subtitle}</p>` : ''}
-        </div>
-        ${price ? `<div class="absolute bottom-10 left-[7%] rounded-2xl bg-[#D22928] px-5 py-3 text-2xl font-black text-white shadow-xl">${price}</div>` : ''}
-        <div class="absolute bottom-8 right-[9%] grid h-[210px] w-[210px] place-items-center rounded-full bg-white/90 text-center text-sm font-black text-gray-400 shadow-2xl md:h-[280px] md:w-[280px]">GENERATED<br/>VISUAL</div>
-      `;
+    downloadButton.addEventListener('click', function () {
+      if (latestDownloadUrl) {
+        window.location.href = latestDownloadUrl;
+      }
     });
   </script>
 </body>
