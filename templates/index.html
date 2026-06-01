@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Food AI Studio</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -90,7 +92,6 @@
     .btn-primary:hover:not(:disabled) {
       transform: translateY(-1px);
       box-shadow: 0 20px 45px rgba(0,96,100,.32);
-      filter: saturate(1.05);
     }
 
     .btn-primary:disabled {
@@ -133,8 +134,6 @@
       border-color: var(--brand-primary-mid);
       background: var(--brand-primary-soft);
     }
-
-    .type-card input:checked + div { color: var(--brand-primary); }
 
     .type-card:has(input:checked) {
       border: 2px solid var(--brand-primary);
@@ -188,7 +187,18 @@
           </div>
         </div>
 
-        <button type="button" class="btn-secondary px-4 py-3 text-sm">Login / Register</button>
+        <div class="flex items-center gap-3">
+          <button id="loginOpenBtn" type="button" class="btn-secondary px-4 py-3 text-sm">
+            Login / Register
+          </button>
+
+          <div id="userBox" class="hidden items-center gap-3">
+            <span id="userEmailText" class="hidden text-sm font-bold text-gray-700 md:inline"></span>
+            <button id="logoutBtn" type="button" class="btn-secondary px-4 py-3 text-sm">
+              Logout
+            </button>
+          </div>
+        </div>
       </header>
 
       <section class="grid gap-6 lg:grid-cols-[420px_1fr]">
@@ -207,7 +217,7 @@
                   <input type="radio" name="type" value="poster" checked class="sr-only">
                   <div>
                     <p class="font-black">Poster</p>
-                    <p class="mt-1 text-xs text-gray-400">1:1 / 4:5</p>
+                    <p class="mt-1 text-xs text-gray-400">1:1</p>
                   </div>
                 </label>
 
@@ -317,11 +327,13 @@
               <p class="brand-text mt-2 text-3xl font-black">24</p>
               <p class="mt-1 text-sm text-gray-500">Generated images</p>
             </div>
+
             <div class="soft-card stat-card rounded-[26px] p-5">
               <p class="text-sm font-black text-gray-400">Success</p>
               <p class="brand-text mt-2 text-3xl font-black">98%</p>
               <p class="mt-1 text-sm text-gray-500">Safe area matched</p>
             </div>
+
             <div class="soft-card stat-card rounded-[26px] p-5">
               <p class="text-sm font-black text-gray-400">Mode</p>
               <p class="brand-text mt-2 text-3xl font-black">Pro</p>
@@ -338,19 +350,19 @@
               <button type="button" class="btn-secondary px-4 py-3 text-sm">View All</button>
             </div>
 
-            <div id="recentDesigns" data-logged-in="false" class="relative overflow-hidden rounded-3xl">
+            <div id="recentDesigns" class="relative overflow-hidden rounded-3xl">
               <div id="recentGrid" class="grid gap-4 md:grid-cols-3">
                 <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#B2EBF2] via-[#E0F7FA] to-white"></div>
                 <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#80DEEA] via-[#E0F7FA] to-white"></div>
                 <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#E0F7FA] via-white to-[#B2EBF2]"></div>
               </div>
 
-              <div class="lock-layer absolute inset-0 grid place-items-center rounded-3xl">
+              <div id="recentLockLayer" class="lock-layer absolute inset-0 grid place-items-center rounded-3xl">
                 <div class="text-center">
                   <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-lg">🔒</div>
                   <p class="text-lg font-black text-gray-900">Login to view your creations</p>
                   <p class="mt-1 text-sm text-gray-500">登录后可以查看清晰的历史作品</p>
-                  <button type="button" class="btn-primary mt-4 px-5 py-3 text-sm">Login / Register</button>
+                  <button id="recentLoginBtn" type="button" class="btn-primary mt-4 px-5 py-3 text-sm">Login / Register</button>
                 </div>
               </div>
             </div>
@@ -360,139 +372,60 @@
     </section>
   </main>
 
-  <script>
-    const form = document.getElementById('generateForm');
-    const previewArea = document.getElementById('previewArea');
-    const logoInput = document.getElementById('logoInput');
-    const logoStatus = document.getElementById('logoStatus');
-    const foodImageInput = document.getElementById('foodImageInput');
-    const foodImageText = document.getElementById('foodImageText');
-    const foodImageSubText = document.getElementById('foodImageSubText');
-    const generateButton = document.getElementById('generateButton');
-    const regenerateButton = document.getElementById('regenerateButton');
-    const downloadButton = document.getElementById('downloadButton');
-
-    let latestDownloadUrl = '';
-
-    logoInput.addEventListener('change', function () {
-      if (logoInput.files && logoInput.files[0]) {
-        logoStatus.textContent = '✓ ' + logoInput.files[0].name + ' uploaded';
-        logoStatus.className = 'text-sm font-bold text-green-600';
-      } else {
-        logoStatus.textContent = 'Transparent PNG recommended';
-        logoStatus.className = 'text-sm font-semibold text-gray-400';
-      }
-    });
-
-    foodImageInput.addEventListener('change', function () {
-      if (foodImageInput.files && foodImageInput.files[0]) {
-        foodImageText.textContent = '✓ Food image uploaded';
-        foodImageSubText.textContent = foodImageInput.files[0].name;
-        foodImageSubText.className = 'mt-1 text-xs font-semibold text-green-600';
-      } else {
-        foodImageText.textContent = 'Drop Food Image Here';
-        foodImageSubText.textContent = 'PNG / JPG supported';
-        foodImageSubText.className = 'mt-1 text-xs text-gray-400';
-      }
-    });
-
-    function setLoadingState() {
-      generateButton.disabled = true;
-      generateButton.textContent = 'Generating...';
-      regenerateButton.disabled = true;
-      downloadButton.disabled = true;
-
-      previewArea.className = 'preview-box checker relative grid place-items-center rounded-[28px] border border-[#B2EBF2] shadow-2xl';
-      previewArea.innerHTML = `
-        <div class="text-center px-6">
-          <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg">
-            <span class="text-2xl">⏳</span>
-          </div>
-          <p class="text-xl font-black text-gray-800">Generating...</p>
-          <p class="mt-2 text-sm font-medium text-gray-400">AI is creating your food visual. This may take a while.</p>
+  <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="soft-card w-full max-w-md rounded-[32px] p-6">
+      <div class="mb-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-xl font-black">Food AI Studio Account</h3>
+          <p class="mt-1 text-sm text-gray-500">Login or create your account</p>
         </div>
-      `;
-    }
 
-    function resetButtonState() {
-      generateButton.disabled = false;
-      generateButton.textContent = 'Generate Visuals';
-    }
+        <button id="authCloseBtn" type="button" class="grid h-10 w-10 place-items-center rounded-full bg-gray-100 text-xl font-black">
+          ×
+        </button>
+      </div>
 
-    function showError(message) {
-      previewArea.className = 'preview-box checker relative grid place-items-center rounded-[28px] border border-[#B2EBF2] shadow-2xl';
-      previewArea.innerHTML = `
-        <div class="text-center px-6">
-          <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg">
-            <span class="text-2xl">⚠️</span>
-          </div>
-          <p class="text-xl font-black text-red-600">Generate Failed</p>
-          <p class="mt-2 text-sm font-medium text-gray-500">${message}</p>
+      <div class="mb-4 grid grid-cols-2 gap-2">
+        <button id="loginTabBtn" type="button" class="btn-primary py-3">Login</button>
+        <button id="registerTabBtn" type="button" class="btn-secondary py-3">Register</button>
+      </div>
+
+      <div id="authMessage" class="hidden mb-4 rounded-2xl bg-yellow-50 p-3 text-sm font-semibold text-yellow-800"></div>
+
+      <form id="loginForm" class="space-y-3">
+        <div>
+          <label class="label">Email</label>
+          <input id="loginEmail" type="email" placeholder="you@email.com" class="field" required>
         </div>
-      `;
-    }
 
-    function showGeneratedImage(imageUrl, downloadUrl) {
-      latestDownloadUrl = downloadUrl || imageUrl;
+        <div>
+          <label class="label">Password</label>
+          <input id="loginPassword" type="password" placeholder="Your password" class="field" required>
+        </div>
 
-      previewArea.className = 'preview-box relative overflow-hidden rounded-[28px] border border-[#B2EBF2] shadow-2xl bg-white';
-      previewArea.innerHTML = `
-        <img src="${imageUrl}?t=${Date.now()}" class="h-full w-full object-contain bg-white" alt="Generated food visual" />
-      `;
+        <button type="submit" class="btn-primary w-full">Login</button>
+      </form>
 
-      regenerateButton.disabled = false;
-      downloadButton.disabled = false;
-    }
+      <form id="registerForm" class="hidden space-y-3">
+        <div>
+          <label class="label">Email</label>
+          <input id="registerEmail" type="email" placeholder="you@email.com" class="field" required>
+        </div>
 
-    async function generateVisual() {
-      if (!foodImageInput.files || !foodImageInput.files[0]) {
-        showError('Please upload food image first.');
-        return;
-      }
+        <div>
+          <label class="label">Password</label>
+          <input id="registerPassword" type="password" placeholder="Minimum 6 characters" class="field" minlength="6" required>
+        </div>
 
-      setLoadingState();
+        <button type="submit" class="btn-primary w-full">Create Account</button>
+      </form>
 
-      try {
-        const formData = new FormData(form);
+      <div class="mt-4 rounded-2xl bg-gray-50 p-3 text-xs leading-5 text-gray-500">
+        目前先使用 Email + Password。Google Login 下一步再开启。
+      </div>
+    </div>
+  </div>
 
-        const response = await fetch('/generate', {
-          method: 'POST',
-          body: formData
-        });
-
-        let data;
-        try {
-          data = await response.json();
-        } catch (jsonError) {
-          throw new Error('Server did not return JSON. Please check Railway logs.');
-        }
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || 'Generate failed.');
-        }
-
-        showGeneratedImage(data.image_url, data.download_url);
-      } catch (error) {
-        showError(error.message || 'Generate failed.');
-      } finally {
-        resetButtonState();
-      }
-    }
-
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      generateVisual();
-    });
-
-    regenerateButton.addEventListener('click', function () {
-      generateVisual();
-    });
-
-    downloadButton.addEventListener('click', function () {
-      if (latestDownloadUrl) {
-        window.location.href = latestDownloadUrl;
-      }
-    });
-  </script>
+  <script src="/static/app.js"></script>
 </body>
 </html>
