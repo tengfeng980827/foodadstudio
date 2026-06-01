@@ -378,13 +378,48 @@ LEFT SIDE TEXT SAFE AREA:
 
 STRICT TEXT POSITIONS:
 - Main title must be inside X 60 to 500 and Y 180 to 320.
-- If title is long, wrap it into maximum 2 lines and reduce font size automatically.
+- Main title must never exceed 2 lines.
+- Do not split the main title into 3 lines.
+- If title is long, reduce font size first.
+- If still too long, use tighter letter spacing.
+- If still too long, make each line wider but keep inside X 60 to 500.
+- Long title may wrap into maximum 2 lines only.
+- Never push subtitle, badge, or price downward because of a long title.
 - Subtitle must be inside X 60 to 500 and Y 320 to 390, only if subtitle is provided.
 - Badge must be inside X 60 to 270 and Y 430 to 520, only if badge is provided.
 - Price must be inside X 300 to 520 and Y 430 to 520, only if price is provided.
 - Badge and price must not overlap each other.
 - Badge and price must not overlap the food.
-- Badge and price must not go below Y 560.
+- Badge and price must not go below Y 520.
+
+TITLE WRAPPING RULE:
+- Main title must never exceed 2 lines.
+- A 3-line title is forbidden.
+- If the title is long, make the title smaller instead of adding a third line.
+- Keep the title inside X 60 to 500 and Y 180 to 320.
+- The title must not push subtitle, badge, or price downward.
+- The title must not overlap subtitle, badge, price, food, or logo safe zone.
+- Use smart line breaking so the title looks balanced in 2 lines maximum.
+
+BADGE SAFETY RULE:
+- Badge must stay inside X 60 to 270 and Y 430 to 520.
+- Badge must never go outside the safe area.
+- Badge must never be below Y 520.
+- If title is long, do not move badge downward.
+- If badge text is long, reduce badge size and font size.
+- Badge must not overlap price.
+- Badge must not overlap food.
+- Badge must remain fully readable.
+
+PRICE SAFETY RULE:
+- Price must stay inside X 300 to 520 and Y 430 to 520.
+- Price must never go outside the safe area.
+- Price must never be below Y 520.
+- If title is long, do not move price downward.
+- If price text is long, reduce price font size and price element size.
+- Price must not overlap badge.
+- Price must not overlap food.
+- Price must remain fully readable.
 
 TEXT FITTING RULE:
 - Automatically resize typography to fit the safe area.
@@ -394,8 +429,9 @@ TEXT FITTING RULE:
 - Never allow badge overflow.
 - Never allow price overflow.
 - Never place any text outside X 60 to 520 and Y 150 to 560.
-- If a title is too long, make it smaller or use up to 2 lines.
+- If a title is too long, make it smaller or use up to 2 lines only.
 - If badge or price is too long, make it smaller and keep it inside the assigned box.
+- Do not move lower elements down to solve title overflow.
 
 TYPOGRAPHY:
 {typography_rules()}
@@ -417,11 +453,15 @@ OPTIONAL RULES:
 - Do not invent additional words.
 
 ABSOLUTE NEGATIVE RULES:
+- No 3-line main title.
+- No title outside X 60 to 500, Y 180 to 320.
 - No text above Y 150.
 - No text below Y 560.
 - No text outside X 60 to 520.
 - No badge outside X 60 to 270, Y 430 to 520.
+- No badge below Y 520.
 - No price outside X 300 to 520, Y 430 to 520.
+- No price below Y 520.
 - No food, text, steam, smoke or decoration in logo clean zone X 860 to 1060, Y 20 to 140.
 - No safe area guide lines.
 - No visible boxes showing safe area.
