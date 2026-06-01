@@ -2,375 +2,253 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>外卖生图</title>
-
-  <link rel="stylesheet" href="/static/style.css" />
-  <link rel="manifest" href="/static/manifest.json" />
-  <meta name="theme-color" content="#fff7ed" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="外卖生图" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food AI Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255, 122, 0, .18), transparent 32%),
+        radial-gradient(circle at top right, rgba(239, 68, 68, .13), transparent 34%),
+        linear-gradient(180deg, #fff7ed 0%, #fff 38%, #f8fafc 100%);
+      color: #111827;
+    }
+    .glass {
+      background: rgba(255,255,255,.78);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,.68);
+      box-shadow: 0 24px 80px rgba(15,23,42,.08);
+    }
+    .soft-card {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(226,232,240,.9);
+      box-shadow: 0 18px 50px rgba(15,23,42,.06);
+    }
+    .field {
+      width: 100%;
+      border-radius: 18px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      padding: 14px 16px;
+      outline: none;
+      transition: .2s ease;
+      font-size: 15px;
+    }
+    .field:focus {
+      border-color: #fb923c;
+      box-shadow: 0 0 0 4px rgba(251,146,60,.16);
+    }
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #374151;
+    }
+    .pill {
+      border: 1px solid #fed7aa;
+      background: #fff7ed;
+      color: #c2410c;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      color: white;
+      border-radius: 18px;
+      padding: 15px 18px;
+      font-weight: 900;
+      box-shadow: 0 16px 38px rgba(239,68,68,.24);
+      transition: .2s ease;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 20px 45px rgba(239,68,68,.3); }
+    .btn-secondary {
+      border: 1px solid #e5e7eb;
+      background: white;
+      border-radius: 18px;
+      padding: 15px 18px;
+      font-weight: 800;
+      transition: .2s ease;
+    }
+    .btn-secondary:hover { background: #f9fafb; transform: translateY(-1px); }
+    .preview-frame {
+      aspect-ratio: 1080 / 600;
+      background:
+        linear-gradient(135deg, rgba(17,24,39,.85), rgba(127,29,29,.72)),
+        url('https://images.unsplash.com/photo-1543352634-a1c51d9f1fa7?q=80&w=1800&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+    .checker {
+      background-image: linear-gradient(45deg,#f3f4f6 25%,transparent 25%),linear-gradient(-45deg,#f3f4f6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#f3f4f6 75%),linear-gradient(-45deg,transparent 75%,#f3f4f6 75%);
+      background-size: 24px 24px;
+      background-position: 0 0,0 12px,12px -12px,-12px 0;
+    }
+  </style>
 </head>
-
 <body>
-  <div class="app-shell">
-
-    <header class="app-header">
-      <div>
-        <h1>外卖生图</h1>
-        <p>一键生成高转化外卖头图 / Banner</p>
-      </div>
-      <div class="auth-area">
-  <button
-type="button"
-id="loginOpenBtn"
-class="member-btn">登录 / 注册</button>
-
-  <div id="userBox" class="user-box hidden">
-    <span id="userEmailText"></span>
-    <button type="button" id="logoutBtn">退出</button>
-  </div>
-</div>
-    </header>
-
-    <section class="hero-banner">
-      <div class="hero-left">
-        <h2><span>AI</span>生成外卖头图</h2>
-        <p>输入资料，AI 帮你生成吸睛 Banner</p>
-        <button id="goCreateBtn" class="hero-btn">✨ 开始生成</button>
-      </div>
-
-      <div class="hero-food-card">
-        <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=900&auto=format&fit=crop" alt="Food Banner" />
-        <div class="hero-food-copy">
-          <strong>大满足</strong>
-          <span>双层牛肉堡</span>
-          <em>¥19.9 起</em>
-        </div>
-      </div>
-    </section>
-
-    <section class="shortcut-card">
-      <button data-tab="create">
-        <span class="icon orange">🖼️</span>
-        <strong>AI生图</strong>
-        <small>智能生成</small>
-      </button>
-
-      <button data-tab="templates">
-        <span class="icon purple">📚</span>
-        <strong>模板中心</strong>
-        <small>热门模板</small>
-      </button>
-
-      <button data-tab="create">
-        <span class="icon green">✍️</span>
-        <strong>智能文案</strong>
-        <small>吸睛标题</small>
-      </button>
-
-      <button data-tab="sizes">
-        <span class="icon blue">📐</span>
-        <strong>尺寸设置</strong>
-        <small>多平台适配</small>
-      </button>
-
-      <button data-tab="works">
-        <span class="icon yellow">📁</span>
-        <strong>我的作品</strong>
-        <small>查看管理</small>
-      </button>
-    </section>
-
-    <main class="screen active" id="homeScreen">
-      <div class="section-headline">
-        <div>
-          <h3>热门模板</h3>
-        </div>
-        <button data-tab="templates">查看更多 ›</button>
-      </div>
-
-      <div class="template-scroll">
-        <button class="mini-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600&auto=format&fit=crop" alt="">
+  <main class="min-h-screen px-4 py-5 md:px-8 md:py-8">
+    <section class="mx-auto max-w-7xl">
+      <header class="glass sticky top-4 z-30 mb-6 flex items-center justify-between rounded-[28px] px-4 py-3 md:px-6">
+        <div class="flex items-center gap-3">
+          <div class="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 text-xl font-black text-white shadow-lg">AI</div>
           <div>
-            <strong>冬日热辣</strong>
-            <span>火锅 · 促销</span>
+            <h1 class="text-lg font-black tracking-tight md:text-xl">Food AI Studio</h1>
+            <p class="text-xs font-medium text-gray-500">GrabFood / Foodpanda Banner Generator</p>
           </div>
-          <em>RM29.9</em>
-        </button>
+        </div>
+        <div class="hidden items-center gap-2 md:flex">
+          <span class="pill">1080 × 600</span>
+          <span class="pill">Safe Area Ready</span>
+        </div>
+        <button class="btn-secondary hidden px-4 py-3 text-sm md:block">My Designs</button>
+      </header>
 
-        <button class="mini-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?q=80&w=600&auto=format&fit=crop" alt="">
-          <div>
-            <strong>韩式炸鸡</strong>
-            <span>小吃 · 招牌</span>
+      <section class="grid gap-6 lg:grid-cols-[420px_1fr]">
+        <aside class="soft-card rounded-[32px] p-5 md:p-6">
+          <div class="mb-6">
+            <p class="mb-2 text-sm font-extrabold text-orange-600">Create professional food visuals</p>
+            <h2 class="text-3xl font-black leading-tight tracking-tight md:text-4xl">生成高级外卖头图</h2>
+            <p class="mt-3 text-sm leading-6 text-gray-500">填写菜品资料，系统会自动把标题、Logo、Badge 和价格放在安全位置，适合上传 GrabFood。</p>
           </div>
-          <em>RM22.8</em>
-        </button>
 
-        <button class="mini-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1622597467836-f3285f2131b8?q=80&w=600&auto=format&fit=crop" alt="">
-          <div>
-            <strong>鲜果茶</strong>
-            <span>饮品 · 新品</span>
+          <form class="space-y-5" id="generateForm">
+            <div>
+              <label class="label">图片类型</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="cursor-pointer rounded-2xl border-2 border-orange-400 bg-orange-50 p-4">
+                  <input type="radio" name="type" value="grab_banner" checked class="sr-only">
+                  <p class="font-black text-orange-700">Grab Banner</p>
+                  <p class="mt-1 text-xs text-orange-700/70">1080 × 600</p>
+                </label>
+                <label class="cursor-pointer rounded-2xl border border-gray-200 bg-white p-4 hover:border-orange-300">
+                  <input type="radio" name="type" value="poster" class="sr-only">
+                  <p class="font-black text-gray-800">Poster</p>
+                  <p class="mt-1 text-xs text-gray-400">1:1 / 4:5</p>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label class="label">主标题 *</label>
+              <input class="field" name="title" placeholder="例如：香煎猪扒饭" required />
+            </div>
+
+            <div>
+              <label class="label">副标题 Optional</label>
+              <input class="field" name="subtitle" placeholder="例如：外酥内嫩，现点现煎" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="label">Badge Optional</label>
+                <input class="field" name="badge" placeholder="Must Try!" />
+              </div>
+              <div>
+                <label class="label">价格 Optional</label>
+                <input class="field" name="price" placeholder="RM 12.90" />
+              </div>
+            </div>
+
+            <div>
+              <label class="label">食物描述 *</label>
+              <textarea class="field min-h-[116px] resize-none" name="description" placeholder="描述食物、配菜、酱料、拍摄风格。例如：真实专业摄影，白饭，煎蛋，上面少量酱油，小白菜..." required></textarea>
+            </div>
+
+            <div>
+              <label class="label">风格</label>
+              <select class="field" name="style">
+                <option>专业外卖摄影 / Premium Food Photography</option>
+                <option>日式干净高级 / Clean Japanese Style</option>
+                <option>本地茶餐室风格 / Local Restaurant Style</option>
+                <option>暗色高级餐厅 / Dark Premium Restaurant</option>
+              </select>
+            </div>
+
+            <div class="rounded-3xl bg-gray-50 p-4">
+              <label class="label">上传 Logo / 参考图</label>
+              <div class="checker grid min-h-[120px] place-items-center rounded-2xl border-2 border-dashed border-gray-300 bg-white/70 p-4 text-center">
+                <div>
+                  <p class="font-black text-gray-700">Drop image here</p>
+                  <p class="mt-1 text-xs text-gray-400">PNG / JPG supported</p>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary w-full">Generate Food Banner</button>
+            <button type="button" class="btn-secondary w-full">Save Draft</button>
+          </form>
+        </aside>
+
+        <section class="space-y-6">
+          <div class="soft-card rounded-[32px] p-4 md:p-6">
+            <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 class="text-xl font-black">Live Preview</h3>
+                <p class="text-sm text-gray-500">预览区只展示最终效果，不显示后台安全区。</p>
+              </div>
+              <div class="flex gap-2">
+                <button class="btn-secondary px-4 py-3 text-sm">Regenerate</button>
+                <button class="btn-primary px-4 py-3 text-sm">Download</button>
+              </div>
+            </div>
+
+            <div class="preview-frame relative rounded-[28px] shadow-2xl">
+              <div class="absolute right-8 top-8 rounded-2xl bg-white/90 px-5 py-3 text-lg font-black text-gray-900 shadow-lg">LOGO</div>
+              <div class="absolute left-[7%] top-[32%] max-w-[46%]">
+                <p class="mb-4 inline-flex rounded-full bg-orange-500 px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-lg">Must Try!</p>
+                <h2 class="text-4xl font-black leading-tight tracking-tight text-white drop-shadow-lg md:text-6xl">香煎猪扒饭</h2>
+                <p class="mt-4 text-lg font-bold text-orange-50 drop-shadow md:text-2xl">外酥内嫩，现点现煎</p>
+              </div>
+              <div class="absolute bottom-10 left-[7%] rounded-2xl bg-white px-5 py-3 text-2xl font-black text-red-600 shadow-xl">RM 12.90</div>
+              <div class="absolute bottom-[-7%] right-[7%] h-[58%] w-[34%] rounded-full bg-white/20 blur-2xl"></div>
+              <div class="absolute bottom-8 right-[9%] grid h-[210px] w-[210px] place-items-center rounded-full bg-white/90 text-center text-sm font-black text-gray-400 shadow-2xl md:h-[280px] md:w-[280px]">FOOD<br/>IMAGE</div>
+            </div>
           </div>
-          <em>RM12</em>
-        </button>
 
-        <button class="mini-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=600&auto=format&fit=crop" alt="">
-          <div>
-            <strong>匠心寿司</strong>
-            <span>日料 · 品质</span>
+          <div class="grid gap-4 md:grid-cols-3">
+            <div class="soft-card rounded-[26px] p-5">
+              <p class="text-sm font-black text-gray-400">Today</p>
+              <p class="mt-2 text-3xl font-black">24</p>
+              <p class="mt-1 text-sm text-gray-500">Generated images</p>
+            </div>
+            <div class="soft-card rounded-[26px] p-5">
+              <p class="text-sm font-black text-gray-400">Success</p>
+              <p class="mt-2 text-3xl font-black">98%</p>
+              <p class="mt-1 text-sm text-gray-500">Safe area matched</p>
+            </div>
+            <div class="soft-card rounded-[26px] p-5">
+              <p class="text-sm font-black text-gray-400">Mode</p>
+              <p class="mt-2 text-3xl font-black">Pro</p>
+              <p class="mt-1 text-sm text-gray-500">Food banner layout</p>
+            </div>
           </div>
-          <em>RM39</em>
-        </button>
-      </div>
 
-      <div class="section-headline">
-        <div>
-          <h3>常用尺寸</h3>
-        </div>
-      </div>
-
-      <div class="size-scroll">
-        <button class="size-option selected" data-size="1080x1080">
-          <strong>外卖头图</strong>
-          <span>1080×1080px</span>
-          <i>🖼️</i>
-        </button>
-
-        <button class="size-option" data-size="1080x600">
-          <strong>外卖 Banner</strong>
-          <span>1080×600px</span>
-          <i>🌄</i>
-        </button>
-
-        <button class="size-option" data-size="1080x1080">
-          <strong>产品图</strong>
-          <span>1080×1080px</span>
-          <i>🍱</i>
-        </button>
-
-        <button class="size-option" data-size="custom">
-          <strong>自定义尺寸</strong>
-          <span>自由大小</span>
-          <i>📄</i>
-        </button>
-      </div>
-
-      <div class="section-headline">
-        <div>
-          <h3>最近作品</h3>
-        </div>
-        <button data-tab="works">全部作品 ›</button>
-      </div>
-
-      <div id="homeWorksList" class="recent-grid">
-        <div class="recent-card">
-          <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=600&auto=format&fit=crop" alt="">
-          <strong>双层牛肉堡头图</strong>
-          <span>今天 14:30</span>
-        </div>
-        <div class="recent-card">
-          <img src="https://images.unsplash.com/photo-1622597467836-f3285f2131b8?q=80&w=600&auto=format&fit=crop" alt="">
-          <strong>鲜橙多多饮品图</strong>
-          <span>今天 11:20</span>
-        </div>
-        <div class="recent-card">
-          <img src="https://images.unsplash.com/photo-1529042410759-befb1204b468?q=80&w=600&auto=format&fit=crop" alt="">
-          <strong>麻辣香锅头图</strong>
-          <span>昨天 16:45</span>
-        </div>
-        <div class="recent-card">
-          <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=600&auto=format&fit=crop" alt="">
-          <strong>寿司头图设计</strong>
-          <span>昨天 10:15</span>
-        </div>
-      </div>
-    </main>
-
-    <main class="screen" id="createScreen">
-      <div class="page-title">
-        <h2>新建画布</h2>
-        <p>填写资料后，一键生成外卖头图</p>
-      </div>
-
-      <form id="generateForm" class="create-form">
-        <label>
-          选择尺寸
-          <select id="canvasSize" name="size">
-            <option value="1080x1080">Grab 头图 1080×1080</option>
-            <option value="1080x1080">产品图 1080×1080</option>
-            <option value="1080x600">Banner 1080×600</option>
-          </select>
-        </label>
-
-        <label>
-          主标题
-          <input id="titleInput" name="title" placeholder="例如：超值套餐 / 新品上市" required />
-        </label>
-
-        <label>
-          副标题，可选
-          <input id="subtitleInput" name="subtitle" placeholder="例如：吃货必点 / 今日限定" />
-        </label>
-
-        <label>
-          价格，可选
-          <input id="priceInput" name="price" placeholder="例如：RM19.90 / ¥29.9" />
-        </label>
-
-        <label>
-          Badge 标签，可选
-          <input id="badgeInput" name="badge" placeholder="例如：Must Try / 限时优惠" />
-        </label>
-
-        <label>
-          风格选择
-          <select id="styleInput" name="style">
-            <option value="auto">自动匹配风格</option>
-            <option value="luxury">高级商业摄影风</option>
-            <option value="hawker">马来西亚档口风</option>
-            <option value="japanese">日式餐厅风</option>
-            <option value="plain">简洁高级风</option>
-          </select>
-        </label>
-
-        <label>
-          上传食物图片
-          <input id="foodImageInput" name="food_image" type="file" accept="image/*" required />
-        </label>
-
-        <label>
-          上传 Logo，可选
-          <input id="logoInput" name="logo" type="file" accept="image/*" />
-        </label>
-
-        <button type="submit" class="generate-btn">🚀 开始生成</button>
-      </form>
-
-      <section class="result-card" id="resultCard">
-        <h3>生成结果</h3>
-        <div id="loadingBox" class="loading-box hidden">AI 正在生成中...</div>
-        <img id="resultImage" class="result-image hidden" />
-        <a id="downloadBtn" class="download-btn hidden" download="banner.png">下载图片</a>
+          <div class="soft-card rounded-[32px] p-5 md:p-6">
+            <div class="mb-4 flex items-center justify-between">
+              <div>
+                <h3 class="text-xl font-black">Recent Designs</h3>
+                <p class="text-sm text-gray-500">客户生成过的作品可以放这里。</p>
+              </div>
+              <button class="btn-secondary px-4 py-3 text-sm">View All</button>
+            </div>
+            <div class="grid gap-4 md:grid-cols-3">
+              <div class="aspect-[4/3] rounded-3xl bg-gradient-to-br from-orange-100 to-red-100 p-4"></div>
+              <div class="aspect-[4/3] rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 p-4"></div>
+              <div class="aspect-[4/3] rounded-3xl bg-gradient-to-br from-rose-100 to-orange-100 p-4"></div>
+            </div>
+          </div>
+        </section>
       </section>
-    </main>
-
-    <main class="screen" id="templatesScreen">
-      <div class="page-title">
-        <h2>模板中心</h2>
-        <p>选择一个风格，快速开始设计</p>
-      </div>
-
-      <div class="template-board">
-        <button class="large-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=900&auto=format&fit=crop" alt="">
-          <strong>超值套餐</strong>
-          <span>吃货必点</span>
-        </button>
-
-        <button class="large-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=900&auto=format&fit=crop" alt="">
-          <strong>轻食沙拉</strong>
-          <span>Fresh & Healthy</span>
-        </button>
-
-        <button class="large-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?q=80&w=900&auto=format&fit=crop" alt="">
-          <strong>限时秒杀</strong>
-          <span>仅限今日</span>
-        </button>
-
-        <button class="large-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=900&auto=format&fit=crop" alt="">
-          <strong>匠心寿司</strong>
-          <span>新鲜食材</span>
-        </button>
-
-        <button class="large-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1529042410759-befb1204b468?q=80&w=900&auto=format&fit=crop" alt="">
-          <strong>麻辣香锅</strong>
-          <span>超满足</span>
-        </button>
-
-        <button class="large-template" data-tab="create">
-          <img src="https://images.unsplash.com/photo-1562967914-608f82629710?q=80&w=900&auto=format&fit=crop" alt="">
-          <strong>新品上市</strong>
-          <span>New Arrival</span>
-        </button>
-      </div>
-    </main>
-
-    <main class="screen" id="worksScreen">
-      <div class="page-title">
-        <h2>我的作品</h2>
-        <p>最近生成的 Banner 会显示在这里</p>
-      </div>
-
-      <div id="worksList" class="works-list">
-        <div class="empty-state">
-          暂时还没有作品，先去生成第一张吧。
-        </div>
-      </div>
-    </main>
-
-    <nav class="bottom-nav">
-      <button class="nav-item active" data-tab="home">首页</button>
-      <button class="nav-item" data-tab="templates">模板</button>
-      <button class="nav-plus" data-tab="create">＋</button>
-      <button class="nav-item" data-tab="works">作品</button>
-      <button class="nav-item" data-tab="mine">我的</button>
-    </nav>
-
-  </div>
-
-<div id="authModal" class="auth-modal hidden">
-  <div class="auth-card">
-    <button id="authCloseBtn" class="auth-close">×</button>
-
-    <h2>登录账号</h2>
-    <p>登录后，你生成的作品会保存到你的账号里。</p>
-
-    <div class="auth-tabs">
-      <button type="button" id="loginTabBtn" class="active">登录</button>
-      <button type="button" id="registerTabBtn">注册</button>
-    </div>
-
-    <form id="loginForm" class="auth-form">
-      <label>
-        Email
-        <input type="email" id="loginEmail" placeholder="your@email.com" required />
-      </label>
-
-      <label>
-        Password
-        <input type="password" id="loginPassword" placeholder="至少 6 个字符" required />
-      </label>
-
-      <button type="submit" class="auth-submit">登录</button>
-    </form>
-
-    <form id="registerForm" class="auth-form hidden">
-      <label>
-        Email
-        <input type="email" id="registerEmail" placeholder="your@email.com" required />
-      </label>
-
-      <label>
-        Password
-        <input type="password" id="registerPassword" placeholder="至少 6 个字符" required />
-      </label>
-
-      <button type="submit" class="auth-submit">注册账号</button>
-    </form>
-
-    <div id="authMessage" class="auth-message hidden"></div>
-  </div>
-</div>
-
-  <script src="/static/app.js"></script>
+    </section>
+  </main>
 </body>
 </html>
