@@ -232,7 +232,8 @@ def optional_text_rules(title: str, subtitle: str, badge: str, price: str) -> st
     if not rules:
         return "No user text provided. Do not invent any words."
 
-    return "\n".join(rules)
+    return "
+".join(rules)
 
 
 def typography_rules() -> str:
@@ -445,6 +446,7 @@ Your task is to create a premium square food advertisement poster.
 
 FINAL OUTPUT:
 - 1:1 square poster.
+- Final canvas must be 1080px × 1080px.
 - Professional food advertising poster.
 - Suitable for GrabFood, Foodpanda, Instagram, Facebook, menu promotion and food campaign usage.
 - No watermark.
@@ -504,23 +506,83 @@ Steam should be:
 - not too strong
 - not blocking the food
 - not blocking text
+- not entering the logo clean zone
 
 If the uploaded item is cold food, dessert, or drink, do not add hot steam unless naturally suitable.
 
-POSTER DESIGN:
-Let AI freely create the best square advertising poster design.
-Use professional art direction.
-Create a high-converting food campaign visual.
-The food should be the hero.
-The layout should feel premium, modern, authentic and appetizing.
-Design should look like a professional food brand campaign, not a template.
+CRITICAL POSTER CANVAS MAP:
+- Full poster canvas: 1080 wide × 1080 high.
+- Main title safe area: X 70 to 620, Y 80 to 250.
+- Subtitle safe area: X 70 to 620, Y 255 to 345.
+- Logo clean zone: X 800 to 1030, Y 60 to 210.
+- Badge safe area: X 70 to 420, Y 830 to 1010.
+- Price safe area: X 650 to 1010, Y 830 to 1010.
+- Food hero area: X 360 to 980, Y 280 to 860.
 
-POSTER TEXT SAFETY:
-- Keep all user-provided text fully inside the 1:1 canvas.
-- Do not crop any title, subtitle, badge or price.
-- Automatically resize text if needed.
-- Long title can wrap into maximum 2 lines.
-- Readability is more important than huge text.
+FIXED POSTER LAYOUT:
+TOP LEFT:
+- Main title must be in the upper-left area.
+- Main title must stay inside X 70 to 620 and Y 80 to 250.
+- Main title must not cover the food.
+- If title is long, wrap it into maximum 2 lines and reduce font size automatically.
+
+SUBTITLE:
+- Subtitle must be directly below the main title only if provided.
+- Subtitle must stay inside X 70 to 620 and Y 255 to 345.
+- Subtitle must not cover the food.
+- If subtitle is empty, do not create subtitle or any extra tagline.
+
+TOP RIGHT LOGO SAFE AREA:
+- Logo will be overlaid later by code.
+- Keep X 800 to 1030 and Y 60 to 210 completely clean.
+- This zone must contain only simple background / negative space.
+- No food.
+- No text.
+- No decorations.
+- No smoke.
+- No steam.
+- No garnish.
+- No bright object.
+- No fake logo.
+
+FOOD HERO:
+- Food should be the hero visual.
+- Food should be placed mainly inside X 360 to 980 and Y 280 to 860.
+- Food may extend slightly if visually natural, but must not cover title, subtitle, logo, badge, or price.
+- Keep the full plate, bowl, box, cup, or important food parts visible.
+- Do not crop the main product.
+- Do not place important food under the title area.
+- Do not place important food under the logo clean zone.
+
+BOTTOM LEFT BADGE:
+- Badge must be at the bottom-left only if provided.
+- Badge must stay inside X 70 to 420 and Y 830 to 1010.
+- Badge must not cover food.
+- Badge must not overlap price.
+- If badge is empty, do not create badge, sticker, ribbon, label, or placeholder.
+
+BOTTOM RIGHT PRICE:
+- Price must be at the bottom-right only if provided.
+- Price must stay inside X 650 to 1010 and Y 830 to 1010.
+- Price must not cover food.
+- Price must not overlap badge.
+- If price is empty, do not create price, currency, discount, number, price box, or placeholder.
+
+TEXT FITTING RULE:
+- Automatically resize typography to fit inside the assigned safe areas.
+- Readability and staying inside safe area are more important than large text.
+- Never allow title overflow.
+- Never allow subtitle overflow.
+- Never allow badge overflow.
+- Never allow price overflow.
+- Never crop text at the canvas edges.
+- Do not place any user text outside its assigned safe area.
+
+POSTER DESIGN:
+Create a premium square advertising poster design with professional art direction.
+The layout should feel modern, authentic, appetizing and high-converting.
+The poster should look like a professional food brand campaign, not a template.
+Do not show safe area guides, rulers, dashed lines, colored boxes, or layout annotations.
 
 TYPOGRAPHY:
 {typography_rules()}
@@ -540,6 +602,18 @@ OPTIONAL RULES:
 - If price is empty, do not create price, currency, discount, number, price box, or placeholder.
 - Only use user-provided text.
 - Do not invent additional words.
+
+ABSOLUTE NEGATIVE RULES:
+- No title outside X 70 to 620, Y 80 to 250.
+- No subtitle outside X 70 to 620, Y 255 to 345.
+- No badge outside X 70 to 420, Y 830 to 1010.
+- No price outside X 650 to 1010, Y 830 to 1010.
+- No food, text, steam, smoke or decoration in logo clean zone X 800 to 1030, Y 60 to 210.
+- No safe area guide lines.
+- No visible boxes showing safe area.
+- No rulers.
+- No dashed lines.
+- No template guides.
 
 STYLE OPTION:
 {normalize_style(style)}
