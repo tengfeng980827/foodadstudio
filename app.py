@@ -341,21 +341,27 @@ Steam must be:
 
 If the uploaded item is cold food, dessert, or drink, do not add hot steam unless naturally suitable.
 
-FIXED BANNER LAYOUT:
-Keep a professional food delivery banner layout.
+CRITICAL CANVAS MAP:
+- Full banner canvas: 1080 wide × 600 high.
+- Text safe area: X 60 to 520, Y 150 to 560.
+- Food safe area: X 610 to 1020, Y 170 to 560.
+- Logo clean zone: X 860 to 1060, Y 20 to 140.
+- Top danger area: Y 0 to 145. No important text or important food here.
+- Bottom danger area: Y 570 to 600. No important text or important food here.
 
-RIGHT SIDE:
-- Food product.
-- Food should be mainly on the right-center.
+FIXED BANNER LAYOUT:
+RIGHT SIDE FOOD:
+- Food product must be mainly inside X 610 to 1020 and Y 170 to 560.
 - Food product center should be around X 760, Y 390.
 - Food should occupy around 30% to 38% of banner width.
 - Keep full product visible as much as possible.
 - Do not crop plate, bowl, box, cup, or important food parts.
 - Do not cover title, subtitle, badge, price, or logo area.
+- Food must not enter X 860 to 1060, Y 20 to 140.
 
-TOP RIGHT:
-- Logo safe area.
+TOP RIGHT LOGO SAFE AREA:
 - Keep X 860 to 1060, Y 20 to 140 completely clean.
+- This zone must contain only simple background / negative space.
 - No food.
 - No text.
 - No decorations.
@@ -365,18 +371,31 @@ TOP RIGHT:
 - No bright objects.
 - No fake logo.
 
-LEFT SIDE:
-- Main title.
-- Subtitle below title only if provided.
-- Badge near bottom-left only if provided.
-- Price near lower left or lower middle-left only if provided.
-- Leave enough clean space for readability.
+LEFT SIDE TEXT SAFE AREA:
+- All typography must stay inside X 60 to 520 and Y 150 to 560.
+- Do not place any title, subtitle, badge, price, CTA, label, decoration text, or small text outside this safe area.
+- Leave enough clean background behind the typography for readability.
 
-SAFE AREA:
-- Keep all important text inside Y 150 to Y 570.
-- Keep important food parts inside Y 150 to Y 570.
-- Top 150px should be clean premium background except logo safe area.
-- Bottom 30px should not contain important text or important food details.
+STRICT TEXT POSITIONS:
+- Main title must be inside X 60 to 500 and Y 180 to 320.
+- If title is long, wrap it into maximum 2 lines and reduce font size automatically.
+- Subtitle must be inside X 60 to 500 and Y 320 to 390, only if subtitle is provided.
+- Badge must be inside X 60 to 270 and Y 430 to 520, only if badge is provided.
+- Price must be inside X 300 to 520 and Y 430 to 520, only if price is provided.
+- Badge and price must not overlap each other.
+- Badge and price must not overlap the food.
+- Badge and price must not go below Y 560.
+
+TEXT FITTING RULE:
+- Automatically resize typography to fit the safe area.
+- Readability and staying inside safe area are more important than large text.
+- Never allow title overflow.
+- Never allow subtitle overflow.
+- Never allow badge overflow.
+- Never allow price overflow.
+- Never place any text outside X 60 to 520 and Y 150 to 560.
+- If a title is too long, make it smaller or use up to 2 lines.
+- If badge or price is too long, make it smaller and keep it inside the assigned box.
 
 TYPOGRAPHY:
 {typography_rules()}
@@ -396,6 +415,19 @@ OPTIONAL RULES:
 - If price is empty, do not create price, currency, discount, number, price box, or placeholder.
 - Only use user-provided text.
 - Do not invent additional words.
+
+ABSOLUTE NEGATIVE RULES:
+- No text above Y 150.
+- No text below Y 560.
+- No text outside X 60 to 520.
+- No badge outside X 60 to 270, Y 430 to 520.
+- No price outside X 300 to 520, Y 430 to 520.
+- No food, text, steam, smoke or decoration in logo clean zone X 860 to 1060, Y 20 to 140.
+- No safe area guide lines.
+- No visible boxes showing safe area.
+- No rulers.
+- No dashed lines.
+- No template guides.
 
 STYLE OPTION:
 {normalize_style(style)}
@@ -482,6 +514,13 @@ Create a high-converting food campaign visual.
 The food should be the hero.
 The layout should feel premium, modern, authentic and appetizing.
 Design should look like a professional food brand campaign, not a template.
+
+POSTER TEXT SAFETY:
+- Keep all user-provided text fully inside the 1:1 canvas.
+- Do not crop any title, subtitle, badge or price.
+- Automatically resize text if needed.
+- Long title can wrap into maximum 2 lines.
+- Readability is more important than huge text.
 
 TYPOGRAPHY:
 {typography_rules()}
