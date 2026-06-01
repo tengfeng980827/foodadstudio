@@ -8,41 +8,66 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --brand-primary: #006064;
+      --brand-primary-mid: #00838F;
+      --brand-primary-bright: #00ACC1;
+      --brand-primary-soft: #E0F7FA;
+      --brand-primary-soft-2: #B2EBF2;
+      --brand-primary-glow: rgba(0, 172, 193, .18);
+      --brand-secondary: #D22928;
+      --brand-secondary-soft: rgba(210, 41, 40, .08);
+      --bg-soft: #F4FBFC;
+      --text-dark: #111827;
+    }
+
     * { box-sizing: border-box; }
+
     body {
       font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(255, 122, 0, .18), transparent 32%),
-        radial-gradient(circle at top right, rgba(239, 68, 68, .13), transparent 34%),
-        linear-gradient(180deg, #fff7ed 0%, #fff 38%, #f8fafc 100%);
-      color: #111827;
+        radial-gradient(circle at top left, rgba(0, 172, 193, .20), transparent 32%),
+        radial-gradient(circle at top right, rgba(0, 96, 100, .12), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(0, 131, 143, .14), transparent 38%),
+        linear-gradient(180deg, #F4FBFC 0%, #FFFFFF 42%, #F3FAFB 100%);
+      color: var(--text-dark);
     }
+
     .glass {
-      background: rgba(255,255,255,.78);
+      background: rgba(255,255,255,.84);
       backdrop-filter: blur(18px);
-      border: 1px solid rgba(255,255,255,.68);
-      box-shadow: 0 24px 80px rgba(15,23,42,.08);
+      border: 1px solid rgba(224,247,250,.88);
+      box-shadow: 0 24px 80px rgba(0,96,100,.10);
     }
+
     .soft-card {
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(226,232,240,.9);
-      box-shadow: 0 18px 50px rgba(15,23,42,.06);
+      background: rgba(255,255,255,.95);
+      border: 1px solid rgba(178,235,242,.70);
+      box-shadow: 0 18px 50px rgba(0,96,100,.07);
     }
+
+    .brand-logo {
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-mid), var(--brand-primary-bright));
+    }
+
     .field {
       width: 100%;
       border-radius: 18px;
-      border: 1px solid #e5e7eb;
+      border: 1px solid #dbecef;
       background: #fff;
       padding: 14px 16px;
       outline: none;
       transition: .2s ease;
       font-size: 15px;
     }
+
     .field:focus {
-      border-color: #fb923c;
-      box-shadow: 0 0 0 4px rgba(251,146,60,.16);
+      border-color: var(--brand-primary-mid);
+      box-shadow: 0 0 0 4px var(--brand-primary-glow);
     }
+
     .label {
       display: block;
       margin-bottom: 8px;
@@ -50,93 +75,177 @@
       font-weight: 800;
       color: #374151;
     }
-    .pill {
-      border: 1px solid #fed7aa;
-      background: #fff7ed;
-      color: #c2410c;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-weight: 800;
-      font-size: 12px;
+
+    .brand-text {
+      color: var(--brand-primary);
     }
+
     .btn-primary {
-      background: linear-gradient(135deg, #f97316, #ef4444);
+      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-mid), var(--brand-primary-bright));
       color: white;
       border-radius: 18px;
       padding: 15px 18px;
       font-weight: 900;
-      box-shadow: 0 16px 38px rgba(239,68,68,.24);
+      box-shadow: 0 16px 38px rgba(0,96,100,.24);
       transition: .2s ease;
     }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 20px 45px rgba(239,68,68,.3); }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 20px 45px rgba(0,96,100,.32);
+      filter: saturate(1.05);
+    }
+
     .btn-secondary {
-      border: 1px solid #e5e7eb;
+      border: 1px solid rgba(0,96,100,.26);
       background: white;
+      color: var(--brand-primary);
       border-radius: 18px;
       padding: 15px 18px;
       font-weight: 800;
       transition: .2s ease;
     }
-    .btn-secondary:hover { background: #f9fafb; transform: translateY(-1px); }
-    .preview-frame {
-      aspect-ratio: 1080 / 600;
-      background:
-        linear-gradient(135deg, rgba(17,24,39,.85), rgba(127,29,29,.72)),
-        url('https://images.unsplash.com/photo-1543352634-a1c51d9f1fa7?q=80&w=1800&auto=format&fit=crop');
-      background-size: cover;
-      background-position: center;
-      overflow: hidden;
+
+    .btn-secondary:hover {
+      background: var(--brand-primary);
+      color: white;
+      transform: translateY(-1px);
     }
+
+    .type-card {
+      cursor: pointer;
+      border-radius: 22px;
+      border: 1px solid #dbecef;
+      background: #fff;
+      padding: 16px;
+      transition: .2s ease;
+      min-height: 86px;
+    }
+
+    .type-card:hover {
+      border-color: var(--brand-primary-mid);
+      background: var(--brand-primary-soft);
+    }
+
+    .type-card input:checked + div {
+      color: var(--brand-primary);
+    }
+
+    .type-card:has(input:checked) {
+      border: 2px solid var(--brand-primary);
+      background: var(--brand-primary-soft);
+      box-shadow: 0 10px 28px rgba(0,96,100,.14);
+    }
+
+    .upload-button {
+      border: 1px solid rgba(0,96,100,.22);
+      color: var(--brand-primary);
+      background: var(--brand-primary-soft);
+    }
+
+    .upload-button:hover {
+      border-color: var(--brand-primary);
+      background: var(--brand-primary-soft-2);
+    }
+
     .checker {
-      background-image: linear-gradient(45deg,#f3f4f6 25%,transparent 25%),linear-gradient(-45deg,#f3f4f6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#f3f4f6 75%),linear-gradient(-45deg,transparent 75%,#f3f4f6 75%);
+      background-color: #fff;
+      background-image:
+        linear-gradient(45deg,#e6f6f8 25%,transparent 25%),
+        linear-gradient(-45deg,#e6f6f8 25%,transparent 25%),
+        linear-gradient(45deg,transparent 75%,#e6f6f8 75%),
+        linear-gradient(-45deg,transparent 75%,#e6f6f8 75%);
       background-size: 24px 24px;
       background-position: 0 0,0 12px,12px -12px,-12px 0;
     }
+
+    .preview-box {
+      aspect-ratio: 1080 / 600;
+      overflow: hidden;
+    }
+
+    .stat-card {
+      border-top: 4px solid var(--brand-primary-mid);
+    }
+
+    .recent-blur {
+      filter: blur(10px);
+      transform: scale(1.02);
+    }
+
+    .lock-layer {
+      background: rgba(255,255,255,.70);
+      backdrop-filter: blur(3px);
+    }
   </style>
 </head>
+
 <body>
   <main class="min-h-screen px-4 py-5 md:px-8 md:py-8">
     <section class="mx-auto max-w-7xl">
+
+      <!-- Header -->
       <header class="glass sticky top-4 z-30 mb-6 flex items-center justify-between rounded-[28px] px-4 py-3 md:px-6">
         <div class="flex items-center gap-3">
-          <div class="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 text-xl font-black text-white shadow-lg">AI</div>
+          <div class="brand-logo grid h-11 w-11 place-items-center rounded-2xl text-xl font-black text-white shadow-lg">
+            AI
+          </div>
           <div>
             <h1 class="text-lg font-black tracking-tight md:text-xl">Food AI Studio</h1>
-            <p class="text-xs font-medium text-gray-500">GrabFood / Foodpanda Banner Generator</p>
+            <p class="text-xs font-medium text-gray-500">Food Delivery Visuals</p>
           </div>
         </div>
-        <div class="hidden items-center gap-2 md:flex">
-          <span class="pill">1080 × 600</span>
-          <span class="pill">Safe Area Ready</span>
-        </div>
-        <button class="btn-secondary hidden px-4 py-3 text-sm md:block">My Designs</button>
+
+        <button class="btn-secondary px-4 py-3 text-sm">
+          Login / Register
+        </button>
       </header>
 
       <section class="grid gap-6 lg:grid-cols-[420px_1fr]">
+
+        <!-- Left Form -->
         <aside class="soft-card rounded-[32px] p-5 md:p-6">
           <div class="mb-6">
-            <p class="mb-2 text-sm font-extrabold text-orange-600">Create professional food visuals</p>
+            <p class="brand-text mb-2 text-sm font-extrabold">Create professional food visuals</p>
             <h2 class="text-3xl font-black leading-tight tracking-tight md:text-4xl">生成高级外卖头图</h2>
-            <p class="mt-3 text-sm leading-6 text-gray-500">填写菜品资料，系统会自动把标题、Logo、Badge 和价格放在安全位置，适合上传 GrabFood。</p>
+            <p class="mt-3 text-sm leading-6 text-gray-500">
+              上传食物图片，AI 自动识别并生成适合外卖平台、海报和产品图的专业视觉素材。
+            </p>
           </div>
 
           <form class="space-y-5" id="generateForm">
+
+            <!-- Visual Type -->
             <div>
               <label class="label">图片类型</label>
-              <div class="grid grid-cols-2 gap-3">
-                <label class="cursor-pointer rounded-2xl border-2 border-orange-400 bg-orange-50 p-4">
-                  <input type="radio" name="type" value="grab_banner" checked class="sr-only">
-                  <p class="font-black text-orange-700">Grab Banner</p>
-                  <p class="mt-1 text-xs text-orange-700/70">1080 × 600</p>
+              <div class="grid grid-cols-3 gap-3">
+                <label class="type-card">
+                  <input type="radio" name="type" value="poster" checked class="sr-only">
+                  <div>
+                    <p class="font-black">Poster</p>
+                    <p class="mt-1 text-xs text-gray-400">1:1 / 4:5</p>
+                  </div>
                 </label>
-                <label class="cursor-pointer rounded-2xl border border-gray-200 bg-white p-4 hover:border-orange-300">
-                  <input type="radio" name="type" value="poster" class="sr-only">
-                  <p class="font-black text-gray-800">Poster</p>
-                  <p class="mt-1 text-xs text-gray-400">1:1 / 4:5</p>
+
+                <label class="type-card">
+                  <input type="radio" name="type" value="banner" class="sr-only">
+                  <div>
+                    <p class="font-black">Banner</p>
+                    <p class="mt-1 text-xs text-gray-400">1080×600</p>
+                  </div>
+                </label>
+
+                <label class="type-card">
+                  <input type="radio" name="type" value="product" class="sr-only">
+                  <div>
+                    <p class="font-black">Product</p>
+                    <p class="mt-1 text-xs text-gray-400">Clean shot</p>
+                  </div>
                 </label>
               </div>
             </div>
 
+            <!-- Text Fields -->
             <div>
               <label class="label">主标题 *</label>
               <input class="field" name="title" placeholder="例如：香煎猪扒饭" required />
@@ -158,42 +267,57 @@
               </div>
             </div>
 
-            <div>
-              <label class="label">食物描述 *</label>
-              <textarea class="field min-h-[116px] resize-none" name="description" placeholder="描述食物、配菜、酱料、拍摄风格。例如：真实专业摄影，白饭，煎蛋，上面少量酱油，小白菜..." required></textarea>
-            </div>
-
+            <!-- Style -->
             <div>
               <label class="label">风格</label>
               <select class="field" name="style">
-                <option>专业外卖摄影 / Premium Food Photography</option>
-                <option>日式干净高级 / Clean Japanese Style</option>
-                <option>本地茶餐室风格 / Local Restaurant Style</option>
-                <option>暗色高级餐厅 / Dark Premium Restaurant</option>
+                <option selected>AI Auto Detect / AI 自动识别生图</option>
+                <option>Premium Food Photography / 专业外卖摄影</option>
+                <option>GrabFood Style / GrabFood 风格</option>
+                <option>Foodpanda Style / Foodpanda 风格</option>
+                <option>Luxury Restaurant / 高级餐厅风格</option>
+                <option>Japanese Clean Style / 日式干净风格</option>
               </select>
             </div>
 
-            <div class="rounded-3xl bg-gray-50 p-4">
-              <label class="label">上传 Logo / 参考图</label>
-              <div class="checker grid min-h-[120px] place-items-center rounded-2xl border-2 border-dashed border-gray-300 bg-white/70 p-4 text-center">
-                <div>
-                  <p class="font-black text-gray-700">Drop image here</p>
-                  <p class="mt-1 text-xs text-gray-400">PNG / JPG supported</p>
-                </div>
+            <!-- Logo Upload Button -->
+            <div>
+              <label class="label">上传 Logo PNG Optional</label>
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <label class="upload-button inline-flex cursor-pointer items-center justify-center rounded-[18px] px-5 py-3 text-sm font-black shadow-sm transition">
+                  <input id="logoInput" type="file" name="logo" accept="image/png,image/jpeg,image/jpg" class="hidden">
+                  Upload Logo
+                </label>
+                <span id="logoStatus" class="text-sm font-semibold text-gray-400">Transparent PNG recommended</span>
               </div>
             </div>
 
-            <button type="submit" class="btn-primary w-full">Generate Food Banner</button>
-            <button type="button" class="btn-secondary w-full">Save Draft</button>
+            <!-- Food Image Upload -->
+            <div class="rounded-3xl bg-[#F2FBFC] p-4">
+              <label class="label">上传食物图片 *</label>
+              <label class="checker grid min-h-[132px] cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-[#B2EBF2] bg-white/70 p-4 text-center transition hover:border-[var(--brand-primary)] hover:bg-[#E0F7FA]">
+                <input id="foodImageInput" type="file" name="food_image" accept="image/*" class="hidden" required>
+                <div>
+                  <p id="foodImageText" class="font-black text-gray-700">Drop Food Image Here</p>
+                  <p id="foodImageSubText" class="mt-1 text-xs text-gray-400">PNG / JPG supported</p>
+                </div>
+              </label>
+            </div>
+
+            <button type="submit" class="btn-primary w-full">
+              Generate Visuals
+            </button>
           </form>
         </aside>
 
+        <!-- Right Content -->
         <section class="space-y-6">
+
+          <!-- Live Preview -->
           <div class="soft-card rounded-[32px] p-4 md:p-6">
             <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h3 class="text-xl font-black">Live Preview</h3>
-                <p class="text-sm text-gray-500">预览区只展示最终效果，不显示后台安全区。</p>
               </div>
               <div class="flex gap-2">
                 <button class="btn-secondary px-4 py-3 text-sm">Regenerate</button>
@@ -201,54 +325,122 @@
               </div>
             </div>
 
-            <div class="preview-frame relative rounded-[28px] shadow-2xl">
-              <div class="absolute right-8 top-8 rounded-2xl bg-white/90 px-5 py-3 text-lg font-black text-gray-900 shadow-lg">LOGO</div>
-              <div class="absolute left-[7%] top-[32%] max-w-[46%]">
-                <p class="mb-4 inline-flex rounded-full bg-orange-500 px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-lg">Must Try!</p>
-                <h2 class="text-4xl font-black leading-tight tracking-tight text-white drop-shadow-lg md:text-6xl">香煎猪扒饭</h2>
-                <p class="mt-4 text-lg font-bold text-orange-50 drop-shadow md:text-2xl">外酥内嫩，现点现煎</p>
+            <!-- Default empty preview before generation -->
+            <div id="previewArea" class="preview-box checker relative grid place-items-center rounded-[28px] border border-[#B2EBF2] shadow-2xl">
+              <div class="text-center">
+                <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg">
+                  <span class="text-2xl">✨</span>
+                </div>
+                <p class="text-xl font-black text-gray-800">Your Visual Will Appear Here</p>
+                <p class="mt-2 text-sm font-medium text-gray-400">Upload food image and click Generate Visuals</p>
               </div>
-              <div class="absolute bottom-10 left-[7%] rounded-2xl bg-white px-5 py-3 text-2xl font-black text-red-600 shadow-xl">RM 12.90</div>
-              <div class="absolute bottom-[-7%] right-[7%] h-[58%] w-[34%] rounded-full bg-white/20 blur-2xl"></div>
-              <div class="absolute bottom-8 right-[9%] grid h-[210px] w-[210px] place-items-center rounded-full bg-white/90 text-center text-sm font-black text-gray-400 shadow-2xl md:h-[280px] md:w-[280px]">FOOD<br/>IMAGE</div>
             </div>
           </div>
 
+          <!-- Stats -->
           <div class="grid gap-4 md:grid-cols-3">
-            <div class="soft-card rounded-[26px] p-5">
+            <div class="soft-card stat-card rounded-[26px] p-5">
               <p class="text-sm font-black text-gray-400">Today</p>
-              <p class="mt-2 text-3xl font-black">24</p>
+              <p class="brand-text mt-2 text-3xl font-black">24</p>
               <p class="mt-1 text-sm text-gray-500">Generated images</p>
             </div>
-            <div class="soft-card rounded-[26px] p-5">
+            <div class="soft-card stat-card rounded-[26px] p-5">
               <p class="text-sm font-black text-gray-400">Success</p>
-              <p class="mt-2 text-3xl font-black">98%</p>
+              <p class="brand-text mt-2 text-3xl font-black">98%</p>
               <p class="mt-1 text-sm text-gray-500">Safe area matched</p>
             </div>
-            <div class="soft-card rounded-[26px] p-5">
+            <div class="soft-card stat-card rounded-[26px] p-5">
               <p class="text-sm font-black text-gray-400">Mode</p>
-              <p class="mt-2 text-3xl font-black">Pro</p>
-              <p class="mt-1 text-sm text-gray-500">Food banner layout</p>
+              <p class="brand-text mt-2 text-3xl font-black">Pro</p>
+              <p class="mt-1 text-sm text-gray-500">Food visual layout</p>
             </div>
           </div>
 
+          <!-- Recent Designs -->
           <div class="soft-card rounded-[32px] p-5 md:p-6">
             <div class="mb-4 flex items-center justify-between">
               <div>
                 <h3 class="text-xl font-black">Recent Designs</h3>
-                <p class="text-sm text-gray-500">客户生成过的作品可以放这里。</p>
+                <p class="text-sm text-gray-500">生成过的作品可以这里查看。</p>
               </div>
               <button class="btn-secondary px-4 py-3 text-sm">View All</button>
             </div>
-            <div class="grid gap-4 md:grid-cols-3">
-              <div class="aspect-[4/3] rounded-3xl bg-gradient-to-br from-orange-100 to-red-100 p-4"></div>
-              <div class="aspect-[4/3] rounded-3xl bg-gradient-to-br from-amber-100 to-orange-100 p-4"></div>
-              <div class="aspect-[4/3] rounded-3xl bg-gradient-to-br from-rose-100 to-orange-100 p-4"></div>
+
+            <!-- Change data-logged-in to true after login -->
+            <div id="recentDesigns" data-logged-in="false" class="relative overflow-hidden rounded-3xl">
+              <div class="grid gap-4 md:grid-cols-3">
+                <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#B2EBF2] via-[#E0F7FA] to-white"></div>
+                <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#80DEEA] via-[#E0F7FA] to-white"></div>
+                <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#E0F7FA] via-white to-[#B2EBF2]"></div>
+              </div>
+
+              <div class="lock-layer absolute inset-0 grid place-items-center rounded-3xl">
+                <div class="text-center">
+                  <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-lg">🔒</div>
+                  <p class="text-lg font-black text-gray-900">Login to view your creations</p>
+                  <p class="mt-1 text-sm text-gray-500">登录后可以查看清晰的历史作品</p>
+                  <button class="btn-primary mt-4 px-5 py-3 text-sm">Login / Register</button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
       </section>
     </section>
   </main>
+
+  <script>
+    const form = document.getElementById('generateForm');
+    const previewArea = document.getElementById('previewArea');
+    const logoInput = document.getElementById('logoInput');
+    const logoStatus = document.getElementById('logoStatus');
+    const foodImageInput = document.getElementById('foodImageInput');
+    const foodImageText = document.getElementById('foodImageText');
+    const foodImageSubText = document.getElementById('foodImageSubText');
+
+    logoInput.addEventListener('change', function () {
+      if (logoInput.files && logoInput.files[0]) {
+        logoStatus.textContent = '✓ ' + logoInput.files[0].name + ' uploaded';
+        logoStatus.className = 'text-sm font-bold text-green-600';
+      } else {
+        logoStatus.textContent = 'Transparent PNG recommended';
+        logoStatus.className = 'text-sm font-semibold text-gray-400';
+      }
+    });
+
+    foodImageInput.addEventListener('change', function () {
+      if (foodImageInput.files && foodImageInput.files[0]) {
+        foodImageText.textContent = '✓ Food image uploaded';
+        foodImageSubText.textContent = foodImageInput.files[0].name;
+        foodImageSubText.className = 'mt-1 text-xs font-semibold text-green-600';
+      } else {
+        foodImageText.textContent = 'Drop Food Image Here';
+        foodImageSubText.textContent = 'PNG / JPG supported';
+        foodImageSubText.className = 'mt-1 text-xs text-gray-400';
+      }
+    });
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const title = form.title.value.trim() || 'Food Visual';
+      const subtitle = form.subtitle.value.trim();
+      const badge = form.badge.value.trim();
+      const price = form.price.value.trim();
+
+      previewArea.className = 'preview-box relative overflow-hidden rounded-[28px] border border-[#B2EBF2] shadow-2xl bg-gradient-to-br from-[#00393C] via-[#006064] to-[#00ACC1]';
+      previewArea.innerHTML = `
+        <div class="absolute inset-0 opacity-40" style="background: radial-gradient(circle at 72% 58%, rgba(255,255,255,.92), transparent 22%), radial-gradient(circle at 26% 35%, rgba(0,172,193,.65), transparent 26%);"></div>
+        <div class="absolute right-8 top-8 rounded-2xl bg-white/92 px-5 py-3 text-lg font-black text-gray-900 shadow-lg">LOGO</div>
+        <div class="absolute left-[7%] top-[30%] max-w-[48%]">
+          ${badge ? `<p class="mb-4 inline-flex rounded-full bg-[#D22928] px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-lg">${badge}</p>` : ''}
+          <h2 class="text-4xl font-black leading-tight tracking-tight text-white drop-shadow-lg md:text-6xl">${title}</h2>
+          ${subtitle ? `<p class="mt-4 text-lg font-bold text-cyan-50 drop-shadow md:text-2xl">${subtitle}</p>` : ''}
+        </div>
+        ${price ? `<div class="absolute bottom-10 left-[7%] rounded-2xl bg-[#D22928] px-5 py-3 text-2xl font-black text-white shadow-xl">${price}</div>` : ''}
+        <div class="absolute bottom-8 right-[9%] grid h-[210px] w-[210px] place-items-center rounded-full bg-white/90 text-center text-sm font-black text-gray-400 shadow-2xl md:h-[280px] md:w-[280px]">GENERATED<br/>VISUAL</div>
+      `;
+    });
+  </script>
 </body>
 </html>
