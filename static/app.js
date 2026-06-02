@@ -15,15 +15,11 @@ const loginOpenBtn = document.getElementById("loginOpenBtn");
 const recentLoginBtn = document.getElementById("recentLoginBtn");
 const authModal = document.getElementById("authModal");
 const authCloseBtn = document.getElementById("authCloseBtn");
-
 const loginTabBtn = document.getElementById("loginTabBtn");
 const registerTabBtn = document.getElementById("registerTabBtn");
-
 const loginForm = document.getElementById("loginForm");
 const registerForm = document.getElementById("registerForm");
-
 const authMessage = document.getElementById("authMessage");
-
 const userBox = document.getElementById("userBox");
 const userEmailText = document.getElementById("userEmailText");
 const logoutBtn = document.getElementById("logoutBtn");
@@ -31,7 +27,14 @@ const logoutBtn = document.getElementById("logoutBtn");
 const recentGrid = document.getElementById("recentGrid");
 const recentLockLayer = document.getElementById("recentLockLayer");
 
+const viewAllDesignsBtn = document.getElementById("viewAllDesignsBtn");
+const designsModal = document.getElementById("designsModal");
+const designsCloseBtn = document.getElementById("designsCloseBtn");
+const myDesignsGrid = document.getElementById("myDesignsGrid");
+
 let latestDownloadUrl = "";
+let allUserDesigns = [];
+let currentDesignFilter = "all";
 
 function showAuthMessage(message) {
   if (!authMessage) return;
@@ -57,26 +60,20 @@ function closeAuthModal() {
 function showLoginTab() {
   loginTabBtn?.classList.add("btn-primary");
   loginTabBtn?.classList.remove("btn-secondary");
-
   registerTabBtn?.classList.add("btn-secondary");
   registerTabBtn?.classList.remove("btn-primary");
-
   loginForm?.classList.remove("hidden");
   registerForm?.classList.add("hidden");
-
   clearAuthMessage();
 }
 
 function showRegisterTab() {
   registerTabBtn?.classList.add("btn-primary");
   registerTabBtn?.classList.remove("btn-secondary");
-
   loginTabBtn?.classList.add("btn-secondary");
   loginTabBtn?.classList.remove("btn-primary");
-
   registerForm?.classList.remove("hidden");
   loginForm?.classList.add("hidden");
-
   clearAuthMessage();
 }
 
@@ -117,7 +114,6 @@ function updateAuthUI() {
     userBox?.classList.remove("hidden");
     userBox?.classList.add("flex");
     if (userEmailText) userEmailText.textContent = email;
-
     recentLockLayer?.classList.add("hidden");
     loadRecentDesigns();
   } else {
@@ -125,20 +121,16 @@ function updateAuthUI() {
     userBox?.classList.add("hidden");
     userBox?.classList.remove("flex");
     if (userEmailText) userEmailText.textContent = "";
-
     recentLockLayer?.classList.remove("hidden");
   }
 }
 
 loginOpenBtn?.addEventListener("click", openAuthModal);
 recentLoginBtn?.addEventListener("click", openAuthModal);
-
 authCloseBtn?.addEventListener("click", closeAuthModal);
 
 authModal?.addEventListener("click", function (event) {
-  if (event.target === authModal) {
-    closeAuthModal();
-  }
+  if (event.target === authModal) closeAuthModal();
 });
 
 loginTabBtn?.addEventListener("click", showLoginTab);
@@ -151,7 +143,6 @@ logoutBtn?.addEventListener("click", function () {
 
 registerForm?.addEventListener("submit", async function (event) {
   event.preventDefault();
-
   clearAuthMessage();
 
   const email = document.getElementById("registerEmail")?.value.trim();
@@ -165,9 +156,7 @@ registerForm?.addEventListener("submit", async function (event) {
   try {
     const response = await fetch("/auth/register", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
     });
 
@@ -189,7 +178,6 @@ registerForm?.addEventListener("submit", async function (event) {
 
 loginForm?.addEventListener("submit", async function (event) {
   event.preventDefault();
-
   clearAuthMessage();
 
   const email = document.getElementById("loginEmail")?.value.trim();
@@ -203,9 +191,7 @@ loginForm?.addEventListener("submit", async function (event) {
   try {
     const response = await fetch("/auth/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
     });
 
@@ -318,10 +304,9 @@ async function generateVisual() {
     });
 
     let data;
-
     try {
       data = await response.json();
-    } catch (jsonError) {
+    } catch {
       throw new Error("Server did not return JSON. Please check Railway logs.");
     }
 
@@ -344,17 +329,17 @@ form?.addEventListener("submit", function (event) {
   generateVisual();
 });
 
-regenerateButton?.addEventListener("click", function () {
-  generateVisual();
-});
+regenerateButton?.addEventListener("click", generateVisual);
 
 downloadButton?.addEventListener("click", async function () {
   if (!latestDownloadUrl) return;
+  await downloadImage(latestDownloadUrl);
+});
 
+async function downloadImage(imageUrl) {
   try {
-    const response = await fetch(latestDownloadUrl);
+    const response = await fetch(imageUrl);
     const blob = await response.blob();
-
     const blobUrl = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
 
@@ -365,10 +350,10 @@ downloadButton?.addEventListener("click", async function () {
 
     a.remove();
     window.URL.revokeObjectURL(blobUrl);
-  } catch (error) {
+  } catch {
     alert("Download failed. Please try again.");
   }
-});
+}
 
 function saveWork(imageUrl, downloadUrl) {
   const works = JSON.parse(localStorage.getItem("food_ai_works") || "[]");
@@ -386,7 +371,6 @@ async function loadRecentDesigns() {
   if (!recentGrid) return;
 
   const userId = localStorage.getItem("food_ai_user_id") || "";
-
   if (!userId) return;
 
   try {
@@ -409,7 +393,7 @@ async function loadRecentDesigns() {
       return;
     }
 
-    recentGrid.innerHTML = works.map(function (item) {
+    recentGrid.innerHTML = works.slice(0, 6).map(function (item) {
       return `
         <a href="${item.image_url}" target="_blank" class="block overflow-hidden rounded-3xl bg-white shadow">
           <img src="${item.image_url}" class="aspect-[4/3] w-full object-cover" alt="Food AI Design">
@@ -420,7 +404,6 @@ async function loadRecentDesigns() {
         </a>
       `;
     }).join("");
-
   } catch (error) {
     recentGrid.innerHTML = `
       <div class="col-span-full rounded-3xl bg-white p-8 text-center">
@@ -431,7 +414,136 @@ async function loadRecentDesigns() {
   }
 }
 
+async function loadAllDesigns() {
+  if (!myDesignsGrid) return;
 
+  const userId = localStorage.getItem("food_ai_user_id") || "";
+
+  if (!userId) {
+    openAuthModal();
+    showAuthMessage("请先登录查看 My Designs。");
+    return;
+  }
+
+  myDesignsGrid.innerHTML = `
+    <div class="col-span-full rounded-3xl bg-white p-8 text-center">
+      <p class="text-lg font-black text-gray-800">Loading...</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch(`/api/my-designs?user_id=${encodeURIComponent(userId)}&limit=100`);
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Failed to load designs");
+    }
+
+    allUserDesigns = data.items || [];
+    renderMyDesigns();
+  } catch (error) {
+    myDesignsGrid.innerHTML = `
+      <div class="col-span-full rounded-3xl bg-white p-8 text-center">
+        <p class="text-lg font-black text-red-600">Failed to load designs</p>
+        <p class="mt-1 text-sm text-gray-500">${error.message}</p>
+      </div>
+    `;
+  }
+}
+
+function renderMyDesigns() {
+  if (!myDesignsGrid) return;
+
+  const filtered = allUserDesigns.filter(function (item) {
+    if (currentDesignFilter === "all") return true;
+    return (item.visual_type || "").toLowerCase() === currentDesignFilter;
+  });
+
+  if (!filtered.length) {
+    myDesignsGrid.innerHTML = `
+      <div class="col-span-full rounded-3xl bg-white p-8 text-center">
+        <p class="text-lg font-black text-gray-800">No designs found</p>
+        <p class="mt-1 text-sm text-gray-500">这个分类暂时没有作品。</p>
+      </div>
+    `;
+    return;
+  }
+
+  myDesignsGrid.innerHTML = filtered.map(function (item) {
+    const imageUrl = item.image_url;
+    const title = item.title || "Food Design";
+    const type = item.visual_type || "design";
+    const dateText = item.created_at ? new Date(item.created_at).toLocaleString() : "";
+
+    return `
+      <div class="overflow-hidden rounded-3xl bg-white shadow">
+        <a href="${imageUrl}" target="_blank">
+          <img src="${imageUrl}" class="aspect-[4/3] w-full object-cover" alt="Food AI Design">
+        </a>
+
+        <div class="p-3">
+          <p class="truncate text-sm font-black text-gray-800">${title}</p>
+          <p class="mt-1 text-xs font-semibold uppercase text-gray-400">${type}</p>
+          <p class="mt-1 text-xs text-gray-400">${dateText}</p>
+
+          <div class="mt-3 grid grid-cols-2 gap-2">
+            <a href="${imageUrl}" target="_blank" class="btn-secondary px-3 py-2 text-center text-xs">Open</a>
+            <button type="button" class="download-design-btn btn-primary px-3 py-2 text-xs" data-url="${imageUrl}">
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+viewAllDesignsBtn?.addEventListener("click", function () {
+  if (!isLoggedIn()) {
+    openAuthModal();
+    showAuthMessage("请先登录查看 My Designs。");
+    return;
+  }
+
+  designsModal?.classList.remove("hidden");
+  loadAllDesigns();
+});
+
+designsCloseBtn?.addEventListener("click", function () {
+  designsModal?.classList.add("hidden");
+});
+
+designsModal?.addEventListener("click", function (event) {
+  if (event.target === designsModal) {
+    designsModal.classList.add("hidden");
+  }
+});
+
+document.querySelectorAll(".design-filter").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    currentDesignFilter = btn.dataset.filter || "all";
+
+    document.querySelectorAll(".design-filter").forEach(function (item) {
+      item.classList.remove("btn-primary");
+      item.classList.add("btn-secondary");
+    });
+
+    btn.classList.add("btn-primary");
+    btn.classList.remove("btn-secondary");
+
+    renderMyDesigns();
+  });
+});
+
+myDesignsGrid?.addEventListener("click", async function (event) {
+  const btn = event.target.closest(".download-design-btn");
+  if (!btn) return;
+
+  const imageUrl = btn.dataset.url;
+  if (!imageUrl) return;
+
+  await downloadImage(imageUrl);
+});
 
 showLoginTab();
 updateAuthUI();

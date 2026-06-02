@@ -347,7 +347,7 @@
                 <h3 class="text-xl font-black">Recent Designs</h3>
                 <p class="text-sm text-gray-500">生成过的作品可以这里查看。</p>
               </div>
-              <button type="button" class="btn-secondary px-4 py-3 text-sm">View All</button>
+              <button id="viewAllDesignsBtn" type="button" class="btn-secondary px-4 py-3 text-sm">View All</button>
             </div>
 
             <div id="recentDesigns" class="relative overflow-hidden rounded-3xl">
@@ -371,6 +371,34 @@
       </section>
     </section>
   </main>
+
+<div id="designsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+  <div class="soft-card max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-[32px] p-6">
+    <div class="mb-5 flex items-center justify-between">
+      <div>
+        <h3 class="text-2xl font-black">My Designs</h3>
+        <p class="text-sm text-gray-500">查看和下载你生成过的作品</p>
+      </div>
+
+      <button id="designsCloseBtn" type="button" class="grid h-10 w-10 place-items-center rounded-full bg-gray-100 text-xl font-black">
+        ×
+      </button>
+    </div>
+
+    <div class="mb-5 flex flex-wrap gap-2">
+      <button class="design-filter btn-primary px-4 py-2 text-sm" data-filter="all">All</button>
+      <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="poster">Poster</button>
+      <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="banner">Banner</button>
+      <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="product">Product</button>
+    </div>
+
+    <div id="myDesignsGrid" class="grid max-h-[65vh] gap-4 overflow-y-auto pr-2 md:grid-cols-3 lg:grid-cols-4">
+      <div class="col-span-full rounded-3xl bg-white p-8 text-center">
+        <p class="text-lg font-black text-gray-800">Loading...</p>
+      </div>
+    </div>
+  </div>
+</div>
 
   <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
     <div class="soft-card w-full max-w-md rounded-[32px] p-6">
