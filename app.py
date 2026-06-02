@@ -30,9 +30,14 @@ UPLOAD_FOLDER.mkdir(exist_ok=True)
 OUTPUT_FOLDER.mkdir(exist_ok=True)
 LOGO_FOLDER.mkdir(exist_ok=True)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
+SUPABASE_ANON_KEY = (
+    os.getenv("SUPABASE_ANON_KEY")
+    or os.getenv("SUPABASE_PUBLISHABLE_KEY")
+    or ""
+)
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "generated-images")
 
 IMAGE_MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-2")
 
@@ -171,6 +176,121 @@ def overlay_logo(image_path: str, logo_path: str, visual_type: str) -> None:
 
 def output_url(filename: str) -> str:
     return f"/outputs/{filename}"
+
+
+def upload_to_supabase_storage(local_path: str, storage_key: str) -> Optional[str]:
+    """
+    Upload a generated PNG to Supabase Storage and return the public URL.
+    The bucket should be public. Default bucket: generated-images.
+    """
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        print("Storage skipped: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY")
+        return None
+
+    try:
+        with open(local_path, "rb") as f:
+            response = requests.post(
+                f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_STORAGE_BUCKET}/{storage_key}",
+                headers={
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Content-Type": "image/png",
+                    "x-upsert": "true",
+                },
+                data=f,
+                timeout=120,
+            )
+
+        if response.status_code not in (200, 201):
+            print("Supabase storage upload failed:", response.status_code, response.text)
+            return None
+
+        return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_STORAGE_BUCKET}/{storage_key}"
+
+    except Exception as e:
+        print("Supabase storage upload error:", e)
+        return None
+
+
+def save_design_to_supabase(
+    user_id: str,
+    user_email: str,
+    image_url: str,
+    download_url: str,
+    visual_type: str,
+    title: str,
+) -> None:
+    """
+    Save a generated design record into public.designs.
+    Requires a designs table in Supabase and SUPABASE_SERVICE_ROLE_KEY in Railway.
+    """
+    if not user_id:
+        return
+
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        print("Design save skipped: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY")
+        return
+
+    try:
+        response = requests.post(
+            f"{SUPABASE_URL}/rest/v1/designs",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+            },
+            json={
+                "user_id": user_id,
+                "user_email": user_email,
+                "image_url": image_url,
+                "download_url": download_url,
+                "visual_type": visual_type,
+                "title": title,
+            },
+            timeout=30,
+        )
+
+        if response.status_code not in (200, 201, 204):
+            print("Design save failed:", response.status_code, response.text)
+
+    except Exception as e:
+        print("Design save error:", e)
+
+
+def list_user_designs(user_id: str, limit: int = 12):
+    """
+    Load the signed-in user's own designs.
+    The Flask app queries with service role but filters strictly by user_id.
+    """
+    if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return []
+
+    try:
+        response = requests.get(
+            f"{SUPABASE_URL}/rest/v1/designs",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            },
+            params={
+                "user_id": f"eq.{user_id}",
+                "select": "*",
+                "order": "created_at.desc",
+                "limit": str(limit),
+            },
+            timeout=30,
+        )
+
+        if response.status_code != 200:
+            print("Load designs failed:", response.status_code, response.text)
+            return []
+
+        return response.json()
+
+    except Exception as e:
+        print("Load designs error:", e)
+        return []
 
 
 def list_recent_outputs(limit: int = 12):
@@ -812,6 +932,10 @@ def generate():
         price = request.form.get("price", "").strip()
         style = request.form.get("style", "AI Auto Detect").strip()
 
+        # User info comes from static/app.js after login.
+        user_id = request.form.get("user_id", "").strip()
+        user_email = request.form.get("user_email", "").strip()
+
         food_image = request.files.get("food_image")
         logo_file = request.files.get("logo")
 
@@ -835,12 +959,37 @@ def generate():
             style=style,
         )
 
+        local_output_path = OUTPUT_FOLDER / filename
+        local_image_url = output_url(filename)
+        local_download_url = f"/download/{filename}"
+
+        # Upload to permanent Supabase Storage.
+        # Path format: user_id/filename. If user_id is missing, use public/filename.
+        safe_user_folder = secure_filename(user_id) if user_id else "public"
+        storage_key = f"{safe_user_folder}/{filename}"
+
+        storage_url = upload_to_supabase_storage(str(local_output_path), storage_key)
+
+        image_url = storage_url or local_image_url
+        download_url = storage_url or local_download_url
+
+        # Save record into Supabase Database if user is logged in.
+        save_design_to_supabase(
+            user_id=user_id,
+            user_email=user_email,
+            image_url=image_url,
+            download_url=download_url,
+            visual_type=visual_type,
+            title=title,
+        )
+
         return jsonify({
             "success": True,
             "filename": filename,
-            "image_url": output_url(filename),
-            "download_url": f"/download/{filename}",
+            "image_url": image_url,
+            "download_url": download_url,
             "recent": list_recent_outputs(6),
+            "storage_uploaded": bool(storage_url),
         })
 
     except Exception as e:
@@ -853,6 +1002,23 @@ def api_recent():
         "success": True,
         "items": list_recent_outputs(12),
     })
+
+
+@app.route("/api/my-designs", methods=["GET"])
+def api_my_designs():
+    try:
+        user_id = request.args.get("user_id", "").strip()
+
+        if not user_id:
+            return jsonify({"success": False, "error": "Missing user_id"}), 400
+
+        return jsonify({
+            "success": True,
+            "items": list_user_designs(user_id, 12),
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/outputs/<path:filename>")
@@ -944,6 +1110,8 @@ def health():
         "image_model": IMAGE_MODEL,
         "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
         "supabase_configured": bool(SUPABASE_URL and SUPABASE_ANON_KEY),
+        "supabase_service_configured": bool(SUPABASE_URL and SUPABASE_SERVICE_KEY),
+        "supabase_storage_bucket": SUPABASE_STORAGE_BUCKET,
         "poster_size": f"{POSTER_W}x{POSTER_H}",
         "product_size": f"{PRODUCT_W}x{PRODUCT_H}",
         "banner_size": f"{BANNER_W}x{BANNER_H}",
