@@ -382,20 +382,54 @@ function saveWork(imageUrl, downloadUrl) {
   localStorage.setItem("food_ai_works", JSON.stringify(works.slice(0, 20)));
 }
 
-function loadRecentDesigns() {
+async function loadRecentDesigns() {
   if (!recentGrid) return;
 
-  const works = JSON.parse(localStorage.getItem("food_ai_works") || "[]");
+  const userId = localStorage.getItem("food_ai_user_id") || "";
 
-  if (!works.length) {
+  if (!userId) return;
+
+  try {
+    const response = await fetch(`/api/my-designs?user_id=${encodeURIComponent(userId)}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Failed to load designs");
+    }
+
+    const works = data.items || [];
+
+    if (!works.length) {
+      recentGrid.innerHTML = `
+        <div class="col-span-full rounded-3xl bg-white p-8 text-center">
+          <p class="text-lg font-black text-gray-800">No designs yet</p>
+          <p class="mt-1 text-sm text-gray-500">生成第一张作品后会显示在这里。</p>
+        </div>
+      `;
+      return;
+    }
+
+    recentGrid.innerHTML = works.map(function (item) {
+      return `
+        <a href="${item.image_url}" target="_blank" class="block overflow-hidden rounded-3xl bg-white shadow">
+          <img src="${item.image_url}" class="aspect-[4/3] w-full object-cover" alt="Food AI Design">
+          <div class="p-3">
+            <p class="text-xs font-bold text-gray-700">${item.title || "Food Design"}</p>
+            <p class="mt-1 text-xs font-semibold text-gray-500">${new Date(item.created_at).toLocaleString()}</p>
+          </div>
+        </a>
+      `;
+    }).join("");
+
+  } catch (error) {
     recentGrid.innerHTML = `
       <div class="col-span-full rounded-3xl bg-white p-8 text-center">
-        <p class="text-lg font-black text-gray-800">No designs yet</p>
-        <p class="mt-1 text-sm text-gray-500">生成第一张作品后会显示在这里。</p>
+        <p class="text-lg font-black text-red-600">Failed to load designs</p>
+        <p class="mt-1 text-sm text-gray-500">${error.message}</p>
       </div>
     `;
-    return;
   }
+}
 
   recentGrid.innerHTML = works.slice(0, 6).map(function (item) {
     return `
