@@ -431,17 +431,7 @@ async function loadRecentDesigns() {
   }
 }
 
-  recentGrid.innerHTML = works.slice(0, 6).map(function (item) {
-    return `
-      <a href="${item.downloadUrl || item.imageUrl}" target="_blank" class="block overflow-hidden rounded-3xl bg-white shadow">
-        <img src="${item.imageUrl}" class="aspect-[4/3] w-full object-cover" alt="Food AI Design">
-        <div class="p-3">
-          <p class="text-xs font-semibold text-gray-500">${item.time}</p>
-        </div>
-      </a>
-    `;
-  }).join("");
-}
+
 
 showLoginTab();
 updateAuthUI();
