@@ -348,9 +348,25 @@ regenerateButton?.addEventListener("click", function () {
   generateVisual();
 });
 
-downloadButton?.addEventListener("click", function () {
-  if (latestDownloadUrl) {
-    window.location.href = latestDownloadUrl;
+downloadButton?.addEventListener("click", async function () {
+  if (!latestDownloadUrl) return;
+
+  try {
+    const response = await fetch(latestDownloadUrl);
+    const blob = await response.blob();
+
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = blobUrl;
+    a.download = "food-ai-design.png";
+    document.body.appendChild(a);
+    a.click();
+
+    a.remove();
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    alert("Download failed. Please try again.");
   }
 });
 
