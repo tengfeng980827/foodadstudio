@@ -24,6 +24,10 @@ const userBox = document.getElementById("userBox");
 const userEmailText = document.getElementById("userEmailText");
 const logoutBtn = document.getElementById("logoutBtn");
 
+const planInfoBox = document.getElementById("planInfoBox");
+const planText = document.getElementById("planText");
+const usageText = document.getElementById("usageText");
+
 const recentGrid = document.getElementById("recentGrid");
 const recentLockLayer = document.getElementById("recentLockLayer");
 
@@ -83,6 +87,7 @@ function saveSession(data, email) {
   localStorage.setItem("food_ai_user_id", data.user?.id || "");
   localStorage.setItem("food_ai_user_email", email || data.user?.email || "");
   updateAuthUI();
+  loadProfile();
 }
 
 function clearSession() {
@@ -113,15 +118,63 @@ function updateAuthUI() {
     loginOpenBtn?.classList.add("hidden");
     userBox?.classList.remove("hidden");
     userBox?.classList.add("flex");
+
     if (userEmailText) userEmailText.textContent = email;
+
+    planInfoBox?.classList.remove("hidden");
+    planInfoBox?.classList.add("flex");
+
     recentLockLayer?.classList.add("hidden");
     loadRecentDesigns();
   } else {
     loginOpenBtn?.classList.remove("hidden");
     userBox?.classList.add("hidden");
     userBox?.classList.remove("flex");
+
     if (userEmailText) userEmailText.textContent = "";
+    if (planText) planText.textContent = "";
+    if (usageText) usageText.textContent = "";
+
+    planInfoBox?.classList.add("hidden");
+    planInfoBox?.classList.remove("flex");
+
     recentLockLayer?.classList.remove("hidden");
+  }
+}
+
+async function loadProfile() {
+  const userId = localStorage.getItem("food_ai_user_id") || "";
+  const email = localStorage.getItem("food_ai_user_email") || "";
+
+  if (!userId) return;
+
+  try {
+    const response = await fetch(
+      `/api/profile?user_id=${encodeURIComponent(userId)}&email=${encodeURIComponent(email)}`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success || !data.profile) return;
+
+    const profile = data.profile;
+
+    planInfoBox?.classList.remove("hidden");
+    planInfoBox?.classList.add("flex");
+
+    if ((profile.plan || "").toLowerCase() === "pro") {
+      if (planText) planText.textContent = "PRO PLAN";
+      if (usageText) usageText.textContent = "Unlimited";
+      return;
+    }
+
+    const used = profile.trial_used ?? 0;
+    const limit = profile.trial_limit ?? 10;
+
+    if (planText) planText.textContent = "TRIAL PLAN";
+    if (usageText) usageText.textContent = `${used} / ${limit} Used`;
+  } catch (error) {
+    console.log("Profile load failed:", error);
   }
 }
 
@@ -317,8 +370,10 @@ async function generateVisual() {
     showGeneratedImage(data.image_url, data.download_url);
     saveWork(data.image_url, data.download_url);
     loadRecentDesigns();
+    loadProfile();
   } catch (error) {
     showError(error.message || "Generate failed.");
+    loadProfile();
   } finally {
     resetButtonState();
   }
@@ -547,6 +602,10 @@ myDesignsGrid?.addEventListener("click", async function (event) {
 
 showLoginTab();
 updateAuthUI();
+
+if (isLoggedIn()) {
+  loadProfile();
+}
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
