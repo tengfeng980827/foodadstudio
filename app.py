@@ -77,88 +77,122 @@ def get_openai_client() -> OpenAI:
 # ======================================================
 
 def get_or_create_profile(user_id: str, email: str):
+    """
+    Trial model:
+    - trial users get 10 total generations
+    - trial expires 2 days after first profile creation
+    - pro users bypass trial limits
+    """
     if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return None
 
-    r = requests.get(
-        f"{SUPABASE_URL}/rest/v1/profiles",
-        headers={
-            "apikey": SUPABASE_SERVICE_KEY,
-            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        },
-        params={
-            "id": f"eq.{user_id}",
-            "select": "*",
-            "limit": "1",
-        },
-        timeout=30,
-    )
+    try:
+        r = requests.get(
+            f"{SUPABASE_URL}/rest/v1/profiles",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            },
+            params={
+                "id": f"eq.{user_id}",
+                "select": "*",
+                "limit": "1",
+            },
+            timeout=30,
+        )
 
-    data = r.json() if r.status_code == 200 else []
+        data = r.json() if r.status_code == 200 else []
 
-    if data:
-        return data[0]
+        if data:
+            return data[0]
 
-    requests.post(
-        f"{SUPABASE_URL}/rest/v1/profiles",
-        headers={
-            "apikey": SUPABASE_SERVICE_KEY,
-            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-            "Content-Type": "application/json",
-            "Prefer": "return=representation",
-        },
-        json={
+        create_response = requests.post(
+            f"{SUPABASE_URL}/rest/v1/profiles",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=representation",
+            },
+            json={
+                "id": user_id,
+                "email": email,
+                "plan": "trial",
+                "trial_limit": 10,
+                "trial_used": 0,
+            },
+            timeout=30,
+        )
+
+        if create_response.status_code in (200, 201):
+            created = create_response.json()
+            if created:
+                return created[0]
+
+        return {
             "id": user_id,
             "email": email,
-            "plan": "free",
-            "daily_limit": 5,
-            "used_today": 0,
-        },
-        timeout=30,
-    )
+            "plan": "trial",
+            "trial_limit": 10,
+            "trial_used": 0,
+        }
 
-    return {
-        "id": user_id,
-        "email": email,
-        "plan": "free",
-        "daily_limit": 5,
-        "used_today": 0,
-    }
+    except Exception as e:
+        print("Profile load/create error:", e)
+        return None
 
 
 def check_generation_limit(user_id: str, email: str):
+    """
+    Returns: (allowed: bool, profile: dict, reason: str)
+    """
     profile = get_or_create_profile(user_id, email)
 
     if not profile:
-        return True, None
+        # If profile cannot be loaded, allow generation rather than blocking paying users by mistake.
+        return True, None, ""
 
-    plan = profile.get("plan", "free")
-    used_today = int(profile.get("used_today") or 0)
-    daily_limit = int(profile.get("daily_limit") or 5)
+    plan = (profile.get("plan") or "trial").lower()
 
     if plan == "pro":
-        return True, profile
+        return True, profile, ""
 
-    if used_today >= daily_limit:
-        return False, profile
+    trial_limit = int(profile.get("trial_limit") or 10)
+    trial_used = int(profile.get("trial_used") or 0)
+    trial_expired = bool(profile.get("trial_expired"))
 
-    return True, profile
+    if trial_expired:
+        return False, profile, "trial_expired"
+
+    if trial_used >= trial_limit:
+        return False, profile, "trial_exhausted"
+
+    return True, profile, ""
 
 
 def increment_usage(user_id: str):
     if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         return
 
-    requests.post(
-        f"{SUPABASE_URL}/rest/v1/rpc/increment_daily_usage",
-        headers={
-            "apikey": SUPABASE_SERVICE_KEY,
-            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-            "Content-Type": "application/json",
-        },
-        json={"user_id_input": user_id},
-        timeout=30,
-    )
+    try:
+        response = requests.post(
+            f"{SUPABASE_URL}/rest/v1/rpc/increment_trial_usage",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={"user_id_input": user_id},
+            timeout=30,
+        )
+
+        if response.status_code not in (200, 204):
+            print("Usage increment failed:", response.status_code, response.text)
+
+    except Exception as e:
+        print("Usage increment error:", e)
+
+
 
 def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -1020,13 +1054,21 @@ def generate():
         user_id = request.form.get("user_id", "").strip()
         user_email = request.form.get("user_email", "").strip()
 
-        allowed, profile = check_generation_limit(user_id, user_email)
+        allowed, profile, limit_reason = check_generation_limit(user_id, user_email)
 
         if not allowed:
+            if limit_reason == "trial_expired":
+                error_message = "Your 2-day free trial has expired. Upgrade to Pro to continue generating images."
+            elif limit_reason == "trial_exhausted":
+                error_message = "You have used all 10 free trial images. Upgrade to Pro to generate more images."
+            else:
+                error_message = "Your trial limit has been reached. Upgrade to Pro to continue."
+
             return jsonify({
                 "success": False,
-                "error": "Free plan daily limit reached. Upgrade to Pro to generate more images.",
+                "error": error_message,
                 "limit_reached": True,
+                "limit_reason": limit_reason,
                 "profile": profile,
             }), 403
 
@@ -1077,6 +1119,10 @@ def generate():
             title=title,
         )
 
+        # Only count usage after successful generation + save attempt.
+        increment_usage(user_id)
+
+        updated_profile = get_or_create_profile(user_id, user_email)
 
         return jsonify({
             "success": True,
@@ -1085,6 +1131,7 @@ def generate():
             "download_url": download_url,
             "recent": list_recent_outputs(6),
             "storage_uploaded": bool(storage_url),
+            "profile": updated_profile,
         })
 
     except Exception as e:
