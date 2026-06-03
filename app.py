@@ -76,6 +76,90 @@ def get_openai_client() -> OpenAI:
 # HELPERS
 # ======================================================
 
+def get_or_create_profile(user_id: str, email: str):
+    if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return None
+
+    r = requests.get(
+        f"{SUPABASE_URL}/rest/v1/profiles",
+        headers={
+            "apikey": SUPABASE_SERVICE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        },
+        params={
+            "id": f"eq.{user_id}",
+            "select": "*",
+            "limit": "1",
+        },
+        timeout=30,
+    )
+
+    data = r.json() if r.status_code == 200 else []
+
+    if data:
+        return data[0]
+
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/profiles",
+        headers={
+            "apikey": SUPABASE_SERVICE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation",
+        },
+        json={
+            "id": user_id,
+            "email": email,
+            "plan": "free",
+            "daily_limit": 5,
+            "used_today": 0,
+        },
+        timeout=30,
+    )
+
+    return {
+        "id": user_id,
+        "email": email,
+        "plan": "free",
+        "daily_limit": 5,
+        "used_today": 0,
+    }
+
+
+def check_generation_limit(user_id: str, email: str):
+    profile = get_or_create_profile(user_id, email)
+
+    if not profile:
+        return True, None
+
+    plan = profile.get("plan", "free")
+    used_today = int(profile.get("used_today") or 0)
+    daily_limit = int(profile.get("daily_limit") or 5)
+
+    if plan == "pro":
+        return True, profile
+
+    if used_today >= daily_limit:
+        return False, profile
+
+    return True, profile
+
+
+def increment_usage(user_id: str):
+    if not user_id or not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/rpc/increment_daily_usage",
+        headers={
+            "apikey": SUPABASE_SERVICE_KEY,
+            "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={"user_id_input": user_id},
+        timeout=30,
+    )
+
 def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -936,6 +1020,16 @@ def generate():
         user_id = request.form.get("user_id", "").strip()
         user_email = request.form.get("user_email", "").strip()
 
+        allowed, profile = check_generation_limit(user_id, user_email)
+
+        if not allowed:
+            return jsonify({
+                "success": False,
+                "error": "Free plan daily limit reached. Upgrade to Pro to generate more images.",
+                "limit_reached": True,
+                "profile": profile,
+            }), 403
+
         food_image = request.files.get("food_image")
         logo_file = request.files.get("logo")
 
@@ -983,6 +1077,7 @@ def generate():
             title=title,
         )
 
+
         return jsonify({
             "success": True,
             "filename": filename,
@@ -1003,6 +1098,25 @@ def api_recent():
         "items": list_recent_outputs(12),
     })
 
+@app.route("/api/profile", methods=["GET"])
+def api_profile():
+    try:
+        user_id = request.args.get("user_id", "").strip()
+        email = request.args.get("email", "").strip()
+
+        if not user_id:
+            return jsonify({"success": False, "error": "Missing user_id"}), 400
+
+        profile = get_or_create_profile(user_id, email)
+
+        return jsonify({
+            "success": True,
+            "profile": profile,
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 
 @app.route("/api/my-designs", methods=["GET"])
 def api_my_designs():
@@ -1012,9 +1126,15 @@ def api_my_designs():
         if not user_id:
             return jsonify({"success": False, "error": "Missing user_id"}), 400
 
+        limit = request.args.get("limit", "12").strip()
+        try:
+            limit = max(1, min(int(limit), 100))
+        except Exception:
+            limit = 12
+
         return jsonify({
             "success": True,
-            "items": list_user_designs(user_id, 12),
+            "items": list_user_designs(user_id, limit),
         })
 
     except Exception as e:
