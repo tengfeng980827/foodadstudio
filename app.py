@@ -50,8 +50,8 @@ BANNER_H = 600
 POSTER_W = 1080
 POSTER_H = 1080
 
-PRODUCT_W = 1080
-PRODUCT_H = 1080
+PRODUCT_W = 720
+PRODUCT_H = 720
 
 _client: Optional[OpenAI] = None
 
@@ -473,6 +473,25 @@ def optional_text_rules(title: str, subtitle: str, badge: str, price: str) -> st
     return "\n".join(rules)
 
 
+def outcome_note_rules(note: str) -> str:
+    cleaned = clean_text(note)
+    if not cleaned:
+        return "No extra user outcome note provided."
+
+    return f"""
+USER OUTCOME REQUIREMENT / REMARKS:
+{cleaned}
+
+Follow the user outcome requirement as much as possible, but only when it does not conflict with:
+- safe area rules
+- food identity preservation
+- logo clean zone
+- text placement rules
+- no random text / no fake logo rules
+If there is conflict, the fixed safety and preservation rules must be higher priority.
+""".strip()
+
+
 def typography_rules() -> str:
     return """
 TYPOGRAPHY REQUIREMENTS:
@@ -495,7 +514,7 @@ TYPOGRAPHY REQUIREMENTS:
 # GPT IMAGE PROMPTS
 # ======================================================
 
-def build_banner_prompt(title: str, subtitle: str, badge: str, price: str, style: str) -> str:
+def build_banner_prompt(title: str, subtitle: str, badge: str, price: str, style: str, note: str = "") -> str:
     return f"""
 Analyze the uploaded food image carefully.
 
@@ -712,10 +731,12 @@ STYLE OPTION:
 
 USER TEXT:
 {optional_text_rules(title, subtitle, badge, price)}
+
+{outcome_note_rules(note)}
 """
 
 
-def build_poster_prompt(title: str, subtitle: str, badge: str, price: str, style: str) -> str:
+def build_poster_prompt(title: str, subtitle: str, badge: str, price: str, style: str, note: str = "") -> str:
     return f"""
 Analyze the uploaded food image carefully.
 
@@ -897,10 +918,15 @@ STYLE OPTION:
 
 USER TEXT:
 {optional_text_rules(title, subtitle, badge, price)}
+
+{outcome_note_rules(note)}
 """
 
 
-def build_product_prompt(style: str) -> str:
+def build_product_prompt(style: str, note: str = "", has_side: bool = False, has_drink: bool = False) -> str:
+    side_rule = "A side/snack image is provided. Place the side/snack behind the main dish, slightly to one side, smaller than the main dish." if has_side else "No side/snack image is provided. Do not invent a side/snack."
+    drink_rule = "A drink image is provided. Place the drink behind the main dish, slightly to one side, smaller than the main dish." if has_drink else "No drink image is provided. Do not invent a drink."
+
     return f"""
 Analyze the uploaded food image carefully.
 
@@ -908,47 +934,48 @@ Your task is to create a premium clean food product image.
 
 FINAL OUTPUT:
 - 1:1 square product image.
-- Clean product photography.
-- Suitable for menu, GrabFood, Foodpanda, ecommerce, POS system, and product listing.
-- No text.
-- No logo.
-- No price.
-- No badge.
-- No watermark.
-- No border.
+- Final file will be resized to 720px × 720px for faster generation and lighter downloads.
+- Clean product photography for menu, GrabFood, Foodpanda, ecommerce, POS system, and product listing.
+- No text, no logo, no price, no badge, no watermark, no border.
 
-IMPORTANT RATIO RULE:
-- Product image must be 1:1 square.
+CAMERA ANGLE / PRODUCT STANDARDIZATION:
+- Convert the food into a consistent 45-degree camera angle product shot.
+- If the uploaded food photo is top-down / flat lay, transform it into a natural 45-degree front perspective product image.
+- The final product should look like it was photographed from slightly above and in front.
+- Keep the plate, bowl, box, cup, or container shape believable in 45-degree perspective.
+- Do not keep a pure top-down viewpoint unless the food cannot naturally be represented otherwise.
 
 BACKGROUND:
-Use a clean white, off-white, or very light neutral studio background.
-Do not create restaurant scene.
-Do not create colored advertising background.
-Do not use corporate brand colors.
-Do not force teal, cyan, red, blue, or any fixed color palette.
+- Use a pure white studio background.
+- Keep the background clean and simple.
+- Add a very subtle soft contact shadow under the product.
+- No restaurant scene, no table scene, no props, no colored advertising background.
 
 FOOD PRESERVATION:
-Preserve the uploaded food identity.
-Do not change the dish type.
-Do not replace ingredients.
-Do not add unrelated food.
-Do not remove the main product.
-Do not crop important parts.
+- Preserve the uploaded main food identity.
+- Do not change the dish type, meat type, key ingredients, or container type.
+- Improve lighting, sharpness, cleanliness, texture and appetizing presentation while keeping the product recognizable.
 
-PRODUCT PRESENTATION:
-- Remove messy original background.
-- Center the product.
-- Keep the full plate, bowl, box, cup, or food visible.
-- Product should occupy about 65% to 78% of the image.
-- Add soft natural contact shadow.
-- Make food look sharp, appetizing, realistic and premium.
-- Use clean commercial menu photography.
+BUNDLE RULES:
+- The first uploaded image is always the main dish and must be the hero product in front.
+- Main dish must stay largest and closest to the camera.
+- {side_rule}
+- {drink_rule}
+- If both side/snack and drink are provided, place both behind the main dish, balanced left/right, with the main dish clearly in front.
+- Do not replace the main dish with the side or drink.
+- Do not invent extra bundle items that were not uploaded.
+
+PRODUCT COMPOSITION:
+- Center the product bundle.
+- Product or bundle should occupy about 68% to 80% of the image.
+- Keep full plate, bowl, box, cup, or important food parts visible.
+- Do not crop important parts.
+- Make it look realistic, premium, clean, appetizing and menu-ready.
 
 HOT FOOD EFFECT:
-If the food is hot food, add very subtle natural steam.
-Steam must be light, elegant and realistic.
-Do not overdo smoke.
-If the uploaded item is cold food, dessert, or drink, do not add hot steam unless naturally suitable.
+If the main dish is hot food, add very subtle natural steam only if suitable.
+Steam must be light, elegant and realistic. Do not overdo smoke.
+If the item is cold food, dessert, or drink, do not add hot steam unless naturally suitable.
 
 STRICT NEGATIVE:
 - No text.
@@ -960,28 +987,48 @@ STRICT NEGATIVE:
 - No people.
 - No table scene.
 - No restaurant scene.
-- No props unless already part of the food.
 - No unrelated ingredients.
+- No extra side or drink unless uploaded.
 
 STYLE OPTION:
 {normalize_style(style)}
+
+{outcome_note_rules(note)}
 """
+
 
 
 # ======================================================
 # IMAGE GENERATION
 # ======================================================
 
-def call_openai_image_edit(image_path: str, prompt: str, size: str) -> bytes:
-    with open(image_path, "rb") as img:
+def call_openai_image_edit(image_paths, prompt: str, size: str) -> bytes:
+    if isinstance(image_paths, (str, Path)):
+        image_paths = [str(image_paths)]
+
+    opened_files = []
+    try:
+        for image_path in image_paths:
+            if image_path and os.path.exists(str(image_path)):
+                opened_files.append(open(image_path, "rb"))
+
+        if not opened_files:
+            raise ValueError("No valid image files provided for generation.")
+
         result = get_openai_client().images.edit(
             model=IMAGE_MODEL,
-            image=[img],
+            image=opened_files,
             prompt=prompt,
             size=size,
         )
 
-    return base64.b64decode(result.data[0].b64_json)
+        return base64.b64decode(result.data[0].b64_json)
+    finally:
+        for f in opened_files:
+            try:
+                f.close()
+            except Exception:
+                pass
 
 
 def generate_visual(
@@ -993,26 +1040,29 @@ def generate_visual(
     badge: str,
     price: str,
     style: str,
+    note: str = "",
+    side_path: str = "",
+    drink_path: str = "",
 ) -> str:
     visual_type = (visual_type or "poster").lower()
 
     if visual_type == "banner":
-        prompt = build_banner_prompt(title, subtitle, badge, price, style)
+        prompt = build_banner_prompt(title, subtitle, badge, price, style, note)
         openai_size = "1536x1024"
         suffix = "banner_1080x600"
         target_w, target_h = BANNER_W, BANNER_H
     elif visual_type == "product":
-        prompt = build_product_prompt(style)
+        prompt = build_product_prompt(style, note, has_side=bool(side_path), has_drink=bool(drink_path))
         openai_size = "1024x1024"
-        suffix = "product_1080x1080"
+        suffix = "product_720x720"
         target_w, target_h = PRODUCT_W, PRODUCT_H
     else:
-        prompt = build_poster_prompt(title, subtitle, badge, price, style)
+        prompt = build_poster_prompt(title, subtitle, badge, price, style, note)
         openai_size = "1024x1024"
         suffix = "poster_1080x1080"
         target_w, target_h = POSTER_W, POSTER_H
 
-    image_bytes = call_openai_image_edit(image_path, prompt, openai_size)
+    image_bytes = call_openai_image_edit([image_path, side_path, drink_path] if visual_type == "product" else image_path, prompt, openai_size)
 
     filename = f"{int(time.time() * 1000)}_{suffix}.png"
     output_path = OUTPUT_FOLDER / filename
@@ -1049,6 +1099,7 @@ def generate():
         badge = request.form.get("badge", "").strip()
         price = request.form.get("price", "").strip()
         style = request.form.get("style", "AI Auto Detect").strip()
+        note = request.form.get("note", "").strip()
 
         # User info comes from static/app.js after login.
         user_id = request.form.get("user_id", "").strip()
@@ -1072,65 +1123,107 @@ def generate():
                 "profile": profile,
             }), 403
 
-        food_image = request.files.get("food_image")
+        food_images = [f for f in request.files.getlist("food_image") if f and f.filename]
         logo_file = request.files.get("logo")
+        side_file = request.files.get("side_image")
+        drink_file = request.files.get("drink_image")
 
-        if not food_image or not food_image.filename:
+        if not food_images:
             return jsonify({"success": False, "error": "Please upload food image."}), 400
 
-        image_path = save_upload(food_image, UPLOAD_FOLDER)
+        # Poster and Banner are single-output layouts. Product supports batch upload.
+        if visual_type.lower() != "product":
+            food_images = food_images[:1]
+
+        # Prevent a trial user from bypassing the limit with product batch upload.
+        if profile and (profile.get("plan") or "trial").lower() != "pro":
+            trial_limit = int(profile.get("trial_limit") or 10)
+            trial_used = int(profile.get("trial_used") or 0)
+            remaining = max(0, trial_limit - trial_used)
+            if len(food_images) > remaining:
+                return jsonify({
+                    "success": False,
+                    "error": f"Your trial has {remaining} generation(s) remaining. Please upload {remaining} image(s) or upgrade to Pro.",
+                    "limit_reached": True,
+                    "limit_reason": "trial_batch_exceeds_remaining",
+                    "profile": profile,
+                }), 403
 
         logo_path = ""
         if logo_file and logo_file.filename:
             logo_path = save_upload(logo_file, LOGO_FOLDER)
 
-        filename = generate_visual(
-            image_path=image_path,
-            logo_path=logo_path,
-            visual_type=visual_type,
-            title=title,
-            subtitle=subtitle,
-            badge=badge,
-            price=price,
-            style=style,
-        )
+        side_path = ""
+        if side_file and side_file.filename:
+            side_path = save_upload(side_file, UPLOAD_FOLDER)
 
-        local_output_path = OUTPUT_FOLDER / filename
-        local_image_url = output_url(filename)
-        local_download_url = f"/download/{filename}"
+        drink_path = ""
+        if drink_file and drink_file.filename:
+            drink_path = save_upload(drink_file, UPLOAD_FOLDER)
 
-        # Upload to permanent Supabase Storage.
-        # Path format: user_id/filename. If user_id is missing, use public/filename.
         safe_user_folder = secure_filename(user_id) if user_id else "public"
-        storage_key = f"{safe_user_folder}/{filename}"
+        generated_items = []
 
-        storage_url = upload_to_supabase_storage(str(local_output_path), storage_key)
+        for idx, food_image in enumerate(food_images, start=1):
+            image_path = save_upload(food_image, UPLOAD_FOLDER)
 
-        image_url = storage_url or local_image_url
-        download_url = storage_url or local_download_url
+            filename = generate_visual(
+                image_path=image_path,
+                logo_path=logo_path,
+                visual_type=visual_type,
+                title=title,
+                subtitle=subtitle,
+                badge=badge,
+                price=price,
+                style=style,
+                note=note,
+                side_path=side_path,
+                drink_path=drink_path,
+            )
 
-        # Save record into Supabase Database if user is logged in.
-        save_design_to_supabase(
-            user_id=user_id,
-            user_email=user_email,
-            image_url=image_url,
-            download_url=download_url,
-            visual_type=visual_type,
-            title=title,
-        )
+            local_output_path = OUTPUT_FOLDER / filename
+            local_image_url = output_url(filename)
+            local_download_url = f"/download/{filename}"
+            storage_key = f"{safe_user_folder}/{filename}"
+            storage_url = upload_to_supabase_storage(str(local_output_path), storage_key)
 
-        # Only count usage after successful generation + save attempt.
-        increment_usage(user_id)
+            image_url = storage_url or local_image_url
+            download_url = storage_url or local_download_url
+
+            item_title = title or ("Product Bundle" if (side_path or drink_path) else "Product Image")
+            if len(food_images) > 1:
+                item_title = f"{item_title} #{idx}"
+
+            save_design_to_supabase(
+                user_id=user_id,
+                user_email=user_email,
+                image_url=image_url,
+                download_url=download_url,
+                visual_type=visual_type,
+                title=item_title,
+            )
+
+            increment_usage(user_id)
+
+            generated_items.append({
+                "filename": filename,
+                "image_url": image_url,
+                "download_url": download_url,
+                "storage_uploaded": bool(storage_url),
+            })
 
         updated_profile = get_or_create_profile(user_id, user_email)
+        first_item = generated_items[0]
 
         return jsonify({
             "success": True,
-            "filename": filename,
-            "image_url": image_url,
-            "download_url": download_url,
+            "filename": first_item["filename"],
+            "image_url": first_item["image_url"],
+            "download_url": first_item["download_url"],
+            "items": generated_items,
+            "batch_count": len(generated_items),
             "recent": list_recent_outputs(6),
-            "storage_uploaded": bool(storage_url),
+            "storage_uploaded": first_item["storage_uploaded"],
             "profile": updated_profile,
         })
 

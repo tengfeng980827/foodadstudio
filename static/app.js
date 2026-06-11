@@ -7,6 +7,13 @@ const logoStatus = document.getElementById("logoStatus");
 const foodImageInput = document.getElementById("foodImageInput");
 const foodImageText = document.getElementById("foodImageText");
 const foodImageSubText = document.getElementById("foodImageSubText");
+const productBundleOptions = document.getElementById("productBundleOptions");
+const sideImageInput = document.getElementById("sideImageInput");
+const drinkImageInput = document.getElementById("drinkImageInput");
+const sideImageStatus = document.getElementById("sideImageStatus");
+const drinkImageStatus = document.getElementById("drinkImageStatus");
+const titleInput = form?.querySelector('input[name="title"]');
+const typeInputs = Array.from(document.querySelectorAll('input[name="type"]'));
 const generateButton = document.getElementById("generateButton");
 const regenerateButton = document.getElementById("regenerateButton");
 const downloadButton = document.getElementById("downloadButton");
@@ -37,6 +44,7 @@ const designsCloseBtn = document.getElementById("designsCloseBtn");
 const myDesignsGrid = document.getElementById("myDesignsGrid");
 
 let latestDownloadUrl = "";
+let latestGeneratedItems = [];
 let allUserDesigns = [];
 let currentDesignFilter = "all";
 
@@ -262,6 +270,46 @@ loginForm?.addEventListener("submit", async function (event) {
   }
 });
 
+function getSelectedType() {
+  return document.querySelector('input[name="type"]:checked')?.value || "poster";
+}
+
+function updateFormMode() {
+  const type = getSelectedType();
+  const isProduct = type === "product";
+
+  if (productBundleOptions) {
+    productBundleOptions.classList.toggle("hidden", !isProduct);
+  }
+
+  if (foodImageInput) {
+    if (isProduct) {
+      foodImageInput.setAttribute("multiple", "multiple");
+    } else {
+      foodImageInput.removeAttribute("multiple");
+    }
+  }
+
+  if (titleInput) {
+    titleInput.required = !isProduct;
+    titleInput.placeholder = isProduct ? "Product 可不填标题" : "例如：香煎猪扒饭";
+  }
+
+  if (foodImageText) {
+    foodImageText.textContent = isProduct ? "Drop Product Images Here" : "Drop Food Image Here";
+  }
+
+  if (foodImageSubText && (!foodImageInput?.files || !foodImageInput.files.length)) {
+    foodImageSubText.textContent = isProduct ? "可多选 PNG / JPG 批量生成 720×720" : "PNG / JPG supported";
+  }
+}
+
+typeInputs.forEach(function (input) {
+  input.addEventListener("change", updateFormMode);
+});
+
+updateFormMode();
+
 logoInput?.addEventListener("change", function () {
   if (logoInput.files && logoInput.files[0]) {
     logoStatus.textContent = "✓ " + logoInput.files[0].name + " uploaded";
@@ -273,14 +321,37 @@ logoInput?.addEventListener("change", function () {
 });
 
 foodImageInput?.addEventListener("change", function () {
-  if (foodImageInput.files && foodImageInput.files[0]) {
-    foodImageText.textContent = "✓ Food image uploaded";
-    foodImageSubText.textContent = foodImageInput.files[0].name;
+  const count = foodImageInput.files ? foodImageInput.files.length : 0;
+  const isProduct = getSelectedType() === "product";
+
+  if (count > 0) {
+    foodImageText.textContent = isProduct && count > 1 ? `✓ ${count} product images uploaded` : "✓ Food image uploaded";
+    foodImageSubText.textContent = count > 1 ? `${count} files selected for batch generation` : foodImageInput.files[0].name;
     foodImageSubText.className = "mt-1 text-xs font-semibold text-green-600";
   } else {
-    foodImageText.textContent = "Drop Food Image Here";
-    foodImageSubText.textContent = "PNG / JPG supported";
+    foodImageText.textContent = isProduct ? "Drop Product Images Here" : "Drop Food Image Here";
+    foodImageSubText.textContent = isProduct ? "可多选 PNG / JPG 批量生成 720×720" : "PNG / JPG supported";
     foodImageSubText.className = "mt-1 text-xs text-gray-400";
+  }
+});
+
+sideImageInput?.addEventListener("change", function () {
+  if (sideImageInput.files && sideImageInput.files[0]) {
+    sideImageStatus.textContent = "✓ " + sideImageInput.files[0].name;
+    sideImageStatus.className = "text-xs font-bold text-green-600";
+  } else {
+    sideImageStatus.textContent = "No side uploaded";
+    sideImageStatus.className = "text-xs font-semibold text-gray-400";
+  }
+});
+
+drinkImageInput?.addEventListener("change", function () {
+  if (drinkImageInput.files && drinkImageInput.files[0]) {
+    drinkImageStatus.textContent = "✓ " + drinkImageInput.files[0].name;
+    drinkImageStatus.className = "text-xs font-bold text-green-600";
+  } else {
+    drinkImageStatus.textContent = "No drink uploaded";
+    drinkImageStatus.className = "text-xs font-semibold text-gray-400";
   }
 });
 
@@ -297,7 +368,7 @@ function setLoadingState() {
         <span class="text-2xl">⏳</span>
       </div>
       <p class="text-xl font-black text-gray-800">Generating...</p>
-      <p class="mt-2 text-sm font-medium text-gray-400">AI is creating your food visual. This may take a while.</p>
+      <p class="mt-2 text-sm font-medium text-gray-400">AI is creating your food visual. Product batch may take longer depending on image count.</p>
     </div>
   `;
 }
@@ -320,13 +391,38 @@ function showError(message) {
   `;
 }
 
-function showGeneratedImage(imageUrl, downloadUrl) {
-  latestDownloadUrl = downloadUrl || imageUrl;
+function showGeneratedImage(imageUrl, downloadUrl, items = []) {
+  latestGeneratedItems = items && items.length ? items : [{ image_url: imageUrl, download_url: downloadUrl || imageUrl }];
+  latestDownloadUrl = latestGeneratedItems[0].download_url || latestGeneratedItems[0].image_url;
 
   previewArea.className = "preview-box relative overflow-hidden rounded-[28px] border border-[#B2EBF2] shadow-2xl bg-white";
-  previewArea.innerHTML = `
-    <img src="${imageUrl}?t=${Date.now()}" class="h-full w-full object-contain bg-white" alt="Generated food visual" />
-  `;
+
+  if (latestGeneratedItems.length > 1) {
+    previewArea.innerHTML = `
+      <div class="grid h-full w-full grid-cols-2 gap-3 overflow-y-auto bg-white p-4 md:grid-cols-3">
+        ${latestGeneratedItems.map(function (item, index) {
+          const img = item.image_url;
+          const dl = item.download_url || img;
+          return `
+            <div class="overflow-hidden rounded-2xl border border-[#B2EBF2] bg-white shadow-sm">
+              <img src="${img}?t=${Date.now()}" class="aspect-square w-full object-contain bg-white" alt="Generated product ${index + 1}">
+              <button type="button" class="batch-download w-full px-3 py-2 text-xs font-black text-[var(--brand-primary)]" data-url="${dl}">Download #${index + 1}</button>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+
+    previewArea.querySelectorAll(".batch-download").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        downloadImage(btn.getAttribute("data-url"));
+      });
+    });
+  } else {
+    previewArea.innerHTML = `
+      <img src="${imageUrl}?t=${Date.now()}" class="h-full w-full object-contain bg-white" alt="Generated food visual" />
+    `;
+  }
 
   regenerateButton.disabled = false;
   downloadButton.disabled = false;
@@ -367,7 +463,7 @@ async function generateVisual() {
       throw new Error(data.error || "Generate failed.");
     }
 
-    showGeneratedImage(data.image_url, data.download_url);
+    showGeneratedImage(data.image_url, data.download_url, data.items || []);
     saveWork(data.image_url, data.download_url);
     loadRecentDesigns();
     loadProfile();
@@ -387,6 +483,13 @@ form?.addEventListener("submit", function (event) {
 regenerateButton?.addEventListener("click", generateVisual);
 
 downloadButton?.addEventListener("click", async function () {
+  if (latestGeneratedItems.length > 1) {
+    for (const item of latestGeneratedItems) {
+      await downloadImage(item.download_url || item.image_url);
+    }
+    return;
+  }
+
   if (!latestDownloadUrl) return;
   await downloadImage(latestDownloadUrl);
 });

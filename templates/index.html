@@ -241,7 +241,7 @@
                   <input type="radio" name="type" value="product" class="sr-only">
                   <div>
                     <p class="font-black">Product</p>
-                    <p class="mt-1 text-xs text-gray-400">Clean shot</p>
+                    <p class="mt-1 text-xs text-gray-400">720×720</p>
                   </div>
                 </label>
               </div>
@@ -281,6 +281,12 @@
             </div>
 
             <div>
+              <label class="label">备注 / Outcome Requirement Optional</label>
+              <textarea class="field min-h-[110px] resize-none" name="note" placeholder="例如：背景更干净、食物更大、高级感、不要太多装饰、适合Foodpanda主图"></textarea>
+              <p class="mt-2 text-xs font-medium text-gray-400">AI 会尽量跟随备注，但不会违反安全区域、食物保留和文字规则。</p>
+            </div>
+
+            <div>
               <label class="label">上传 Logo PNG Optional</label>
               <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <label class="upload-button inline-flex cursor-pointer items-center justify-center rounded-[18px] px-5 py-3 text-sm font-black shadow-sm transition">
@@ -300,6 +306,25 @@
                   <p id="foodImageSubText" class="mt-1 text-xs text-gray-400">PNG / JPG supported</p>
                 </div>
               </label>
+            </div>
+
+            <div id="productBundleOptions" class="hidden rounded-3xl bg-[#F2FBFC] p-4">
+              <label class="label">Product Bundle Optional</label>
+              <p class="mb-3 text-xs font-medium text-gray-500">Product 模式可上传多张主食批量生成；Sides / Drink 会放在主食后方组成 bundle。</p>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="upload-button inline-flex cursor-pointer items-center justify-center rounded-[18px] px-4 py-3 text-sm font-black shadow-sm transition">
+                  <input id="sideImageInput" type="file" name="side_image" accept="image/*" class="hidden">
+                  Upload Sides
+                </label>
+                <label class="upload-button inline-flex cursor-pointer items-center justify-center rounded-[18px] px-4 py-3 text-sm font-black shadow-sm transition">
+                  <input id="drinkImageInput" type="file" name="drink_image" accept="image/*" class="hidden">
+                  Upload Drink
+                </label>
+              </div>
+              <div class="mt-2 grid grid-cols-2 gap-3">
+                <span id="sideImageStatus" class="text-xs font-semibold text-gray-400">No side uploaded</span>
+                <span id="drinkImageStatus" class="text-xs font-semibold text-gray-400">No drink uploaded</span>
+              </div>
             </div>
 
             <button id="generateButton" type="submit" class="btn-primary w-full">Generate Visuals</button>
