@@ -53,6 +53,13 @@ POSTER_H = 1080
 PRODUCT_W = 720
 PRODUCT_H = 720
 
+SOCIAL_OUTPUTS = {
+    "feed": {"label": "Instagram Feed", "width": 1080, "height": 1080, "openai_size": "1024x1024", "resize": "exact"},
+    "portrait": {"label": "Portrait Post", "width": 1080, "height": 1350, "openai_size": "1024x1536", "resize": "cover"},
+    "story": {"label": "Story / Status", "width": 1080, "height": 1920, "openai_size": "1024x1536", "resize": "cover"},
+    "facebook_ad": {"label": "Facebook Ad", "width": 1200, "height": 628, "openai_size": "1536x1024", "resize": "cover"},
+}
+
 _client: Optional[OpenAI] = None
 
 
@@ -1035,6 +1042,193 @@ STYLE OPTION:
 
 
 
+def normalize_campaign_goal(goal: str) -> str:
+    value = (goal or "best_seller").lower().strip()
+    mapping = {
+        "new_product": "New product launch: introduce the dish clearly and make it feel fresh, new, and worth trying.",
+        "best_seller": "Best seller campaign: make the dish look popular, trusted, and highly craveable.",
+        "promotion": "Promotion campaign: emphasize value, urgency, and conversion without inventing discounts unless the user provided them.",
+        "combo": "Combo meal campaign: present the main dish as a complete meal set when side or drink images are provided.",
+        "festival": "Festival campaign: create a warm seasonal food promotion mood without adding fake festival text unless provided.",
+        "branding": "Restaurant branding campaign: focus on premium brand impression, food quality, and memorable visual identity.",
+    }
+    return mapping.get(value, mapping["best_seller"])
+
+
+def build_social_prompt(format_key: str, title: str, subtitle: str, badge: str, price: str, style: str, note: str, campaign_goal: str, has_side: bool = False, has_drink: bool = False) -> str:
+    spec = SOCIAL_OUTPUTS.get(format_key, SOCIAL_OUTPUTS["feed"])
+    label = spec["label"]
+    w = spec["width"]
+    h = spec["height"]
+
+    if format_key == "story":
+        layout_rules = """
+STORY / STATUS LAYOUT RULES:
+- Design for 9:16 vertical social media viewing.
+- Keep the most important food hero in the middle area.
+- Leave clean space at the top for brand/logo impression.
+- Place title and key message in a large readable hierarchy.
+- Place badge/price/CTA style element near the lower third only if user provided badge or price.
+- Keep all important content away from the extreme top and bottom app UI zones.
+- The design should look premium on Instagram Story, Facebook Story and WhatsApp Status.
+"""
+    elif format_key == "portrait":
+        layout_rules = """
+PORTRAIT POST LAYOUT RULES:
+- Design for 4:5 Instagram portrait feed.
+- Strong hero food composition with high conversion value.
+- Food should occupy around 45% to 60% of the canvas.
+- Typography must be readable on mobile.
+- Keep a premium editorial food campaign look.
+"""
+    elif format_key == "facebook_ad":
+        layout_rules = """
+FACEBOOK AD LAYOUT RULES:
+- Design for a horizontal Facebook ad / campaign visual.
+- Strong left-right hierarchy: clear message area and appetizing food hero area.
+- Make it conversion-focused, clean and clickable.
+- Avoid clutter and keep text highly readable.
+"""
+    else:
+        layout_rules = """
+FEED POST LAYOUT RULES:
+- Design for 1:1 Instagram / Facebook feed.
+- Balanced square campaign layout.
+- Food should be the hero and occupy around 45% to 55% of the image.
+- Typography must be readable in mobile feed.
+"""
+
+    bundle_rules = """
+BUNDLE COMPOSITION:
+- If side image is uploaded, include the side/snack behind or slightly beside the main dish.
+- If drink image is uploaded, include the drink behind the main dish.
+- If both side and drink are uploaded, main dish must stay in front; side and drink appear behind the main dish as a bundle set.
+- Do not let side or drink overpower the main dish.
+""" if (has_side or has_drink) else "Do not add side dishes or drinks unless they appear in the uploaded image."
+
+    return f"""
+Analyze the uploaded food image carefully and create a professional restaurant social media campaign visual.
+
+FINAL OUTPUT:
+- Format: {label}
+- Final canvas: {w}px × {h}px.
+- Suitable for restaurant marketing, Instagram, Facebook, WhatsApp Status, food delivery promotion and social media posting.
+- No watermark.
+- No border.
+- No fake platform UI.
+- No random text.
+- No misspelled text.
+- Do not invent promotion words, discounts, brand names or slogans.
+
+CAMPAIGN GOAL:
+{normalize_campaign_goal(campaign_goal)}
+
+FOOD IDENTITY PRESERVATION:
+- Preserve the uploaded food identity.
+- The generated food must look like the same real dish from the uploaded photo.
+- Do not change pork into chicken, rice into noodles, or one cuisine into another cuisine.
+- Do not replace key ingredients.
+- Do not redesign the dish into a different dish.
+- Improve lighting, texture, color and styling while keeping the real food recognizable.
+
+IMAGE RESTORATION / BLUR RECOVERY:
+- The uploaded food may be slightly blurry, compressed, low resolution or taken from a phone.
+- Restore natural sharpness and food texture before creating the campaign visual.
+- Improve clarity, lighting and color accuracy.
+- Do not invent missing ingredients when the image is unclear.
+
+REALISTIC FOOD PHOTOGRAPHY:
+- Make the final result look like a real professional food campaign photo, not AI generated.
+- Use realistic commercial food photography lighting.
+- Avoid CGI, illustration, plastic-looking food, over-smooth texture, fake reflections and fantasy styling.
+- Keep natural shadows and believable depth.
+- Food must look appetizing, fresh and edible.
+
+SOCIAL MEDIA ART DIRECTION:
+- Premium restaurant campaign design.
+- Strong mobile-first composition.
+- Clear visual hierarchy.
+- Modern professional typography.
+- Attractive but not overcrowded.
+- The image should feel designed by a professional food marketing designer.
+
+{layout_rules}
+
+BUNDLE / EXTRA ITEMS:
+{bundle_rules}
+
+TYPOGRAPHY REQUIREMENTS:
+- Generate typography directly inside the artwork.
+- Use only exact user-provided text.
+- Do not invent extra words.
+- Keep Chinese text clean, premium and readable.
+- Keep English text professional and campaign-ready.
+- Text must not be distorted, misspelled, duplicated or randomly generated.
+- If no text is provided for a field, do not create placeholder text.
+
+USER TEXT:
+{optional_text_rules(title, subtitle, badge, price)}
+
+STYLE OPTION:
+{normalize_style(style)}
+
+USER OUTCOME REQUIREMENT:
+{clean_text(note) if clean_text(note) else "No extra outcome requirement provided."}
+
+IMPORTANT PRIORITY:
+- Follow the outcome requirement only if it does not conflict with food identity preservation, readability, realism and platform-safe layout.
+- Realistic food photography and correct dish identity are higher priority than creative styling.
+"""
+
+
+def generate_social_visual(
+    image_path: str,
+    logo_path: str,
+    format_key: str,
+    title: str,
+    subtitle: str,
+    badge: str,
+    price: str,
+    style: str,
+    note: str,
+    campaign_goal: str,
+    side_path: str = "",
+    drink_path: str = "",
+) -> str:
+    format_key = (format_key or "feed").lower()
+    spec = SOCIAL_OUTPUTS.get(format_key, SOCIAL_OUTPUTS["feed"])
+    prompt = build_social_prompt(
+        format_key=format_key,
+        title=title,
+        subtitle=subtitle,
+        badge=badge,
+        price=price,
+        style=style,
+        note=note,
+        campaign_goal=campaign_goal,
+        has_side=bool(side_path),
+        has_drink=bool(drink_path),
+    )
+
+    image_bytes = call_openai_image_edit([image_path, side_path, drink_path], prompt, spec["openai_size"])
+
+    filename = f"{int(time.time() * 1000)}_social_{format_key}_{spec['width']}x{spec['height']}.png"
+    output_path = OUTPUT_FOLDER / filename
+
+    with open(output_path, "wb") as f:
+        f.write(image_bytes)
+
+    if spec.get("resize") == "cover":
+        resize_cover(str(output_path), spec["width"], spec["height"])
+    else:
+        resize_exact(str(output_path), spec["width"], spec["height"])
+
+    if logo_path:
+        overlay_logo(str(output_path), logo_path, "poster")
+
+    return filename
+
+
 # ======================================================
 # IMAGE GENERATION
 # ======================================================
@@ -1125,6 +1319,11 @@ def generate_visual(
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+@app.route("/social-media-kit")
+def social_media_kit_page():
+    return render_template("social_media_kit.html")
 
 
 @app.route("/generate", methods=["POST"])
@@ -1261,6 +1460,138 @@ def generate():
             "batch_count": len(generated_items),
             "recent": list_recent_outputs(6),
             "storage_uploaded": first_item["storage_uploaded"],
+            "profile": updated_profile,
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/generate-social-kit", methods=["POST"])
+def generate_social_kit():
+    try:
+        title = request.form.get("title", "").strip()
+        subtitle = request.form.get("subtitle", "").strip()
+        badge = request.form.get("badge", "").strip()
+        price = request.form.get("price", "").strip()
+        style = request.form.get("style", "AI Auto Detect").strip()
+        note = request.form.get("note", "").strip()
+        campaign_goal = request.form.get("campaign_goal", "best_seller").strip()
+
+        user_id = request.form.get("user_id", "").strip()
+        user_email = request.form.get("user_email", "").strip()
+
+        outputs = request.form.getlist("outputs")
+        outputs = [o for o in outputs if o in SOCIAL_OUTPUTS]
+        if not outputs:
+            outputs = ["feed"]
+
+        allowed, profile, limit_reason = check_generation_limit(user_id, user_email)
+        if not allowed:
+            if limit_reason == "trial_expired":
+                error_message = "Your 2-day free trial has expired. Upgrade to Pro to continue generating images."
+            elif limit_reason == "trial_exhausted":
+                error_message = "You have used all 10 free trial images. Upgrade to Pro to generate more images."
+            else:
+                error_message = "Your trial limit has been reached. Upgrade to Pro to continue."
+            return jsonify({"success": False, "error": error_message, "limit_reached": True, "limit_reason": limit_reason, "profile": profile}), 403
+
+        # Prevent trial users from generating more selected outputs than remaining credits.
+        if profile and (profile.get("plan") or "trial").lower() != "pro":
+            trial_limit = int(profile.get("trial_limit") or 10)
+            trial_used = int(profile.get("trial_used") or 0)
+            remaining = max(0, trial_limit - trial_used)
+            if len(outputs) > remaining:
+                return jsonify({
+                    "success": False,
+                    "error": f"Your trial has {remaining} generation(s) remaining. Please select {remaining} output(s) or upgrade to Pro.",
+                    "limit_reached": True,
+                    "limit_reason": "trial_social_outputs_exceed_remaining",
+                    "profile": profile,
+                }), 403
+
+        food_file = request.files.get("food_image")
+        logo_file = request.files.get("logo")
+        side_file = request.files.get("side_image")
+        drink_file = request.files.get("drink_image")
+
+        if not food_file or not food_file.filename:
+            return jsonify({"success": False, "error": "Please upload main food image."}), 400
+
+        image_path = save_upload(food_file, UPLOAD_FOLDER)
+
+        logo_path = ""
+        if logo_file and logo_file.filename:
+            logo_path = save_upload(logo_file, LOGO_FOLDER)
+
+        side_path = ""
+        if side_file and side_file.filename:
+            side_path = save_upload(side_file, UPLOAD_FOLDER)
+
+        drink_path = ""
+        if drink_file and drink_file.filename:
+            drink_path = save_upload(drink_file, UPLOAD_FOLDER)
+
+        safe_user_folder = secure_filename(user_id) if user_id else "public"
+        generated_items = []
+
+        for format_key in outputs:
+            filename = generate_social_visual(
+                image_path=image_path,
+                logo_path=logo_path,
+                format_key=format_key,
+                title=title,
+                subtitle=subtitle,
+                badge=badge,
+                price=price,
+                style=style,
+                note=note,
+                campaign_goal=campaign_goal,
+                side_path=side_path,
+                drink_path=drink_path,
+            )
+
+            local_output_path = OUTPUT_FOLDER / filename
+            local_image_url = output_url(filename)
+            local_download_url = f"/download/{filename}"
+            storage_key = f"{safe_user_folder}/{filename}"
+            storage_url = upload_to_supabase_storage(str(local_output_path), storage_key)
+
+            image_url = storage_url or local_image_url
+            download_url = storage_url or local_download_url
+            label = SOCIAL_OUTPUTS.get(format_key, {}).get("label", format_key)
+            item_title = f"Social Media Kit - {label}"
+            if title:
+                item_title = f"{title} - {label}"
+
+            save_design_to_supabase(
+                user_id=user_id,
+                user_email=user_email,
+                image_url=image_url,
+                download_url=download_url,
+                visual_type="social_media",
+                title=item_title,
+            )
+
+            increment_usage(user_id)
+
+            generated_items.append({
+                "format": format_key,
+                "label": label,
+                "filename": filename,
+                "image_url": image_url,
+                "download_url": download_url,
+                "width": SOCIAL_OUTPUTS[format_key]["width"],
+                "height": SOCIAL_OUTPUTS[format_key]["height"],
+                "storage_uploaded": bool(storage_url),
+            })
+
+        updated_profile = get_or_create_profile(user_id, user_email)
+
+        return jsonify({
+            "success": True,
+            "items": generated_items,
+            "batch_count": len(generated_items),
             "profile": updated_profile,
         })
 

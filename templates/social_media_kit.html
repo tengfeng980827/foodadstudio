@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social Media Kit | Food AI Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand-primary:#006064;
+      --brand-primary-mid:#00838F;
+      --brand-primary-bright:#00ACC1;
+      --brand-primary-soft:#E0F7FA;
+      --brand-primary-soft-2:#B2EBF2;
+      --brand-primary-glow:rgba(0,172,193,.18);
+      --brand-secondary:#D22928;
+      --text-dark:#111827;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:'Inter','Noto Sans SC',system-ui,sans-serif;
+      background:radial-gradient(circle at top left,rgba(0,172,193,.20),transparent 32%),radial-gradient(circle at top right,rgba(0,96,100,.12),transparent 34%),linear-gradient(180deg,#F4FBFC 0%,#FFFFFF 45%,#F3FAFB 100%);
+      color:var(--text-dark);
+    }
+    .glass{background:rgba(255,255,255,.84);backdrop-filter:blur(18px);border:1px solid rgba(224,247,250,.88);box-shadow:0 24px 80px rgba(0,96,100,.10)}
+    .soft-card{background:rgba(255,255,255,.95);border:1px solid rgba(178,235,242,.70);box-shadow:0 18px 50px rgba(0,96,100,.07)}
+    .brand-logo{background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-mid),var(--brand-primary-bright))}
+    .brand-text{color:var(--brand-primary)}
+    .field{width:100%;border-radius:18px;border:1px solid #dbecef;background:#fff;padding:14px 16px;outline:none;transition:.2s ease;font-size:15px}
+    .field:focus{border-color:var(--brand-primary-mid);box-shadow:0 0 0 4px var(--brand-primary-glow)}
+    .label{display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#374151}
+    .btn-primary{background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-mid),var(--brand-primary-bright));color:white;border-radius:18px;padding:15px 18px;font-weight:900;box-shadow:0 16px 38px rgba(0,96,100,.24);transition:.2s ease}
+    .btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 20px 45px rgba(0,96,100,.32)}
+    .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+    .btn-secondary{border:1px solid rgba(0,96,100,.26);background:white;color:var(--brand-primary);border-radius:18px;padding:15px 18px;font-weight:800;transition:.2s ease}
+    .btn-secondary:hover:not(:disabled){background:var(--brand-primary);color:white;transform:translateY(-1px)}
+    .upload-button{border:1px solid rgba(0,96,100,.22);color:var(--brand-primary);background:var(--brand-primary-soft)}
+    .upload-button:hover{border-color:var(--brand-primary);background:var(--brand-primary-soft-2)}
+    .choice-card{cursor:pointer;border-radius:22px;border:1px solid #dbecef;background:#fff;padding:14px;transition:.2s ease;min-height:72px}
+    .choice-card:hover{border-color:var(--brand-primary-mid);background:var(--brand-primary-soft)}
+    .choice-card:has(input:checked){border:2px solid var(--brand-primary);background:var(--brand-primary-soft);box-shadow:0 10px 28px rgba(0,96,100,.14)}
+    .checker{background-color:#fff;background-image:linear-gradient(45deg,#e6f6f8 25%,transparent 25%),linear-gradient(-45deg,#e6f6f8 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e6f6f8 75%),linear-gradient(-45deg,transparent 75%,#e6f6f8 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
+    .output-card{background:white;border:1px solid rgba(178,235,242,.75);border-radius:26px;overflow:hidden;box-shadow:0 14px 36px rgba(0,96,100,.08)}
+    .output-empty{min-height:220px}
+  </style>
+</head>
+<body>
+  <main class="min-h-screen px-4 py-5 md:px-8 md:py-8">
+    <section class="mx-auto max-w-7xl">
+      <header class="glass sticky top-4 z-30 mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[28px] px-4 py-3 md:px-6">
+        <div class="flex items-center gap-3">
+          <div class="brand-logo grid h-11 w-11 place-items-center rounded-2xl text-xl font-black text-white shadow-lg">AI</div>
+          <div>
+            <h1 class="text-lg font-black tracking-tight md:text-xl">Food AI Studio</h1>
+            <p class="text-xs font-medium text-gray-500">Social Media Kit</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="/" class="btn-secondary px-4 py-3 text-sm">Product Studio</a>
+          <span id="userEmailText" class="hidden max-w-[180px] truncate text-sm font-bold text-gray-600 md:inline"></span>
+          <button id="logoutBtn" type="button" class="btn-secondary hidden px-4 py-3 text-sm">Logout</button>
+        </div>
+      </header>
+
+      <section class="mb-6 grid gap-4 lg:grid-cols-[1fr_420px]">
+        <div class="soft-card rounded-[32px] p-6 md:p-8">
+          <p class="brand-text mb-2 text-sm font-extrabold">高级玩法 ⭐</p>
+          <h2 class="text-3xl font-black leading-tight tracking-tight md:text-5xl">Social Media Kit</h2>
+          <p class="mt-4 max-w-2xl text-sm leading-7 text-gray-500 md:text-base">上传一张食物图，AI 自动生成 Instagram Feed、Portrait Post、Story / WhatsApp Status 和 Facebook Ad。适合餐厅老板快速做整套营销素材。</p>
+        </div>
+        <div class="soft-card rounded-[32px] p-6">
+          <p class="text-sm font-black text-gray-400">Outputs</p>
+          <div class="mt-4 grid grid-cols-2 gap-3 text-sm font-extrabold text-gray-700">
+            <div class="rounded-2xl bg-[#E0F7FA] p-4">Feed<br><span class="text-xs text-gray-500">1080×1080</span></div>
+            <div class="rounded-2xl bg-[#E0F7FA] p-4">Portrait<br><span class="text-xs text-gray-500">1080×1350</span></div>
+            <div class="rounded-2xl bg-[#E0F7FA] p-4">Story<br><span class="text-xs text-gray-500">1080×1920</span></div>
+            <div class="rounded-2xl bg-[#E0F7FA] p-4">FB Ad<br><span class="text-xs text-gray-500">1200×628</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid gap-6 lg:grid-cols-[430px_1fr]">
+        <aside class="soft-card rounded-[32px] p-5 md:p-6">
+          <form id="socialKitForm" class="space-y-5" enctype="multipart/form-data">
+            <div>
+              <label class="label">Main Food *</label>
+              <label class="checker grid min-h-[120px] cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-[#B2EBF2] bg-white/70 p-4 text-center transition hover:border-[var(--brand-primary)] hover:bg-[#E0F7FA]">
+                <input id="foodImageInput" type="file" name="food_image" accept="image/*" class="hidden" required>
+                <div>
+                  <p id="foodImageText" class="font-black text-gray-700">Upload Main Food</p>
+                  <p id="foodImageSubText" class="mt-1 text-xs text-gray-400">PNG / JPG supported</p>
+                </div>
+              </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="label">Side Optional</label>
+                <label class="upload-button flex cursor-pointer items-center justify-center rounded-[18px] px-4 py-3 text-sm font-black transition">
+                  <input id="sideInput" type="file" name="side_image" accept="image/*" class="hidden">
+                  Upload Side
+                </label>
+                <p id="sideStatus" class="mt-2 truncate text-xs font-semibold text-gray-400">No side</p>
+              </div>
+              <div>
+                <label class="label">Drink Optional</label>
+                <label class="upload-button flex cursor-pointer items-center justify-center rounded-[18px] px-4 py-3 text-sm font-black transition">
+                  <input id="drinkInput" type="file" name="drink_image" accept="image/*" class="hidden">
+                  Upload Drink
+                </label>
+                <p id="drinkStatus" class="mt-2 truncate text-xs font-semibold text-gray-400">No drink</p>
+              </div>
+            </div>
+
+            <div>
+              <label class="label">Logo PNG Optional</label>
+              <label class="upload-button flex cursor-pointer items-center justify-center rounded-[18px] px-4 py-3 text-sm font-black transition">
+                <input id="logoInput" type="file" name="logo" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden">
+                Upload Logo
+              </label>
+              <p id="logoStatus" class="mt-2 truncate text-xs font-semibold text-gray-400">Transparent PNG recommended</p>
+            </div>
+
+            <div>
+              <label class="label">主标题 *</label>
+              <input class="field" name="title" placeholder="例如：香煎猪扒饭" required />
+            </div>
+            <div>
+              <label class="label">副标题 Optional</label>
+              <input class="field" name="subtitle" placeholder="例如：外酥内嫩，现点现煎" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="label">Badge Optional</label>
+                <input class="field" name="badge" placeholder="Must Try!" />
+              </div>
+              <div>
+                <label class="label">价格 Optional</label>
+                <input class="field" name="price" placeholder="RM 12.90" />
+              </div>
+            </div>
+
+            <div>
+              <label class="label">Campaign Goal</label>
+              <select class="field" name="campaign_goal">
+                <option value="best_seller" selected>Best Seller / 爆款推荐</option>
+                <option value="new_product">New Product Launch / 新品上市</option>
+                <option value="promotion">Promotion / 促销活动</option>
+                <option value="combo">Combo Meal / 套餐组合</option>
+                <option value="festival">Festival Campaign / 节日活动</option>
+                <option value="branding">Restaurant Branding / 品牌形象</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Campaign Style</label>
+              <select class="field" name="style">
+                <option selected>AI Auto Detect / AI 自动识别生图</option>
+                <option>Premium Food Photography / 专业外卖摄影</option>
+                <option>Luxury Restaurant / 高级餐厅风格</option>
+                <option>Japanese Clean Style / 日式干净风格</option>
+                <option>Modern Social Media / 现代社媒风格</option>
+                <option>Minimal Clean / 极简干净风格</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="label">备注 / Outcome Requirement</label>
+              <textarea class="field min-h-[100px] resize-none" name="note" placeholder="例如：我要高级感、适合IG Story、突出套餐价值、背景干净、不要太多装饰"></textarea>
+            </div>
+
+            <div>
+              <label class="label">选择输出尺寸</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="choice-card"><input type="checkbox" name="outputs" value="feed" checked class="sr-only"><p class="font-black">Feed</p><p class="mt-1 text-xs text-gray-400">1080×1080</p></label>
+                <label class="choice-card"><input type="checkbox" name="outputs" value="portrait" checked class="sr-only"><p class="font-black">Portrait</p><p class="mt-1 text-xs text-gray-400">1080×1350</p></label>
+                <label class="choice-card"><input type="checkbox" name="outputs" value="story" checked class="sr-only"><p class="font-black">Story</p><p class="mt-1 text-xs text-gray-400">1080×1920</p></label>
+                <label class="choice-card"><input type="checkbox" name="outputs" value="facebook_ad" checked class="sr-only"><p class="font-black">Facebook Ad</p><p class="mt-1 text-xs text-gray-400">1200×628</p></label>
+              </div>
+            </div>
+
+            <button id="generateButton" type="submit" class="btn-primary w-full">Generate Social Media Kit</button>
+          </form>
+        </aside>
+
+        <section class="space-y-6">
+          <div class="soft-card rounded-[32px] p-5 md:p-6">
+            <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 class="text-xl font-black">Kit Preview</h3>
+                <p class="text-sm text-gray-500">生成后会显示你选择的全部社媒尺寸。</p>
+              </div>
+              <button id="downloadAllButton" type="button" class="btn-secondary px-4 py-3 text-sm" disabled>Download All</button>
+            </div>
+            <div id="outputGrid" class="grid gap-4 md:grid-cols-2">
+              <div class="output-card"><div class="output-empty checker grid place-items-center p-6 text-center"><div><p class="font-black">Feed</p><p class="mt-1 text-xs text-gray-400">1080×1080</p></div></div></div>
+              <div class="output-card"><div class="output-empty checker grid place-items-center p-6 text-center"><div><p class="font-black">Portrait</p><p class="mt-1 text-xs text-gray-400">1080×1350</p></div></div></div>
+              <div class="output-card"><div class="output-empty checker grid place-items-center p-6 text-center"><div><p class="font-black">Story</p><p class="mt-1 text-xs text-gray-400">1080×1920</p></div></div></div>
+              <div class="output-card"><div class="output-empty checker grid place-items-center p-6 text-center"><div><p class="font-black">Facebook Ad</p><p class="mt-1 text-xs text-gray-400">1200×628</p></div></div></div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </section>
+  </main>
+  <script src="/static/social_media_kit.js"></script>
+</body>
+</html>
