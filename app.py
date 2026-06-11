@@ -924,58 +924,88 @@ USER TEXT:
 
 
 def build_product_prompt(style: str, note: str = "", has_side: bool = False, has_drink: bool = False) -> str:
-    side_rule = "A side/snack image is provided. Place the side/snack behind the main dish, slightly to one side, smaller than the main dish." if has_side else "No side/snack image is provided. Do not invent a side/snack."
-    drink_rule = "A drink image is provided. Place the drink behind the main dish, slightly to one side, smaller than the main dish." if has_drink else "No drink image is provided. Do not invent a drink."
+    side_rule = "A side/snack image is provided. Use the uploaded side/snack as a real supporting item. Place it behind the main dish, slightly to one side, smaller than the main dish." if has_side else "No side/snack image is provided. Do not invent any side/snack."
+    drink_rule = "A drink image is provided. Use the uploaded drink as a real supporting item. Place it behind the main dish, slightly to one side, smaller than the main dish." if has_drink else "No drink image is provided. Do not invent any drink."
 
     return f"""
-Analyze the uploaded food image carefully.
+Analyze the uploaded food image carefully before generating.
 
-Your task is to create a premium clean food product image.
+Your task is to create a REALISTIC clean food product photo for menu listing, not a fantasy advertising render.
 
 FINAL OUTPUT:
 - 1:1 square product image.
 - Final file will be resized to 720px × 720px for faster generation and lighter downloads.
-- Clean product photography for menu, GrabFood, Foodpanda, ecommerce, POS system, and product listing.
+- Suitable for Foodpanda menu, GrabFood menu, restaurant menu, ecommerce listing, POS system and delivery platforms.
 - No text, no logo, no price, no badge, no watermark, no border.
 
-CAMERA ANGLE / PRODUCT STANDARDIZATION:
-- Convert the food into a consistent 45-degree camera angle product shot.
-- If the uploaded food photo is top-down / flat lay, transform it into a natural 45-degree front perspective product image.
-- The final product should look like it was photographed from slightly above and in front.
-- Keep the plate, bowl, box, cup, or container shape believable in 45-degree perspective.
-- Do not keep a pure top-down viewpoint unless the food cannot naturally be represented otherwise.
+IMAGE RESTORATION / BLUR RECOVERY:
+- The uploaded image may be low resolution, blurry, compressed, dark, noisy, or taken from WhatsApp / screenshots.
+- First restore the product naturally: improve sharpness, lighting, texture, color accuracy and food detail.
+- Recover realistic food texture where possible, but do not hallucinate a different dish.
+- If the image is slightly blurry, make it look like a clean professional food photo.
+- If the image is very blurry, preserve only clearly visible food identity and avoid guessing unknown ingredients.
+- Do not invent ingredients to compensate for blur.
 
-BACKGROUND:
-- Use a pure white studio background.
-- Keep the background clean and simple.
-- Add a very subtle soft contact shadow under the product.
-- No restaurant scene, no table scene, no props, no colored advertising background.
+45-DEGREE CAMERA ANGLE STANDARD:
+- Always convert the main food into a professional 45-degree camera angle product shot.
+- The camera should be slightly above and in front of the food, like realistic menu product photography.
+- If the uploaded photo is top-down / flat lay / overhead, reconstruct it into a believable 45-degree front perspective.
+- Never output a pure top-down flat lay product image.
+- Never output an extreme side view.
+- Keep the plate, bowl, lunch box, cup, or container shape realistic in 45-degree perspective.
 
-FOOD PRESERVATION:
-- Preserve the uploaded main food identity.
-- Do not change the dish type, meat type, key ingredients, or container type.
-- Improve lighting, sharpness, cleanliness, texture and appetizing presentation while keeping the product recognizable.
+WHITE BACKGROUND / SOFT SHADOW:
+- Use a pure white seamless studio background.
+- Keep the background clean, bright and uncluttered.
+- Add only a subtle natural soft contact shadow underneath the product.
+- Shadow must be gentle, realistic and barely visible, not dramatic.
+- Do not use restaurant scenes, table surfaces, props, colored backgrounds, gradients, tiles, wood, smoke-filled backgrounds, or decorative objects.
 
-BUNDLE RULES:
+FOOD IDENTITY PRESERVATION:
+- The generated food must still look like the same real dish uploaded by the user.
+- Do not change the dish type.
+- Do not change the meat type.
+- Do not change rice/noodle/base type.
+- Do not replace sauce, toppings, vegetables, garnish, container, bowl, plate or packaging unless cleanup is necessary.
+- Do not make the product look more expensive by turning it into a different dish.
+- Improve cleanliness, lighting, sharpness and plating only while preserving the original product identity.
+
+REALISTIC FOOD PHOTOGRAPHY / ANTI-AI LOOK:
+- The result must look like a real food product photographed in a small professional studio.
+- Prioritize realism over beauty.
+- Use natural lens perspective and believable shadows.
+- Avoid CGI, 3D render, illustration, plastic texture, fake glossy surfaces, overly perfect food, surreal details, melted shapes, duplicated ingredients or AI-looking symmetry.
+- Avoid exaggerated steam, fake smoke, fantasy lighting, fake bokeh, overly saturated color and impossible food geometry.
+- Do not create a stock-photo-looking dish that no longer matches the upload.
+- Make edges clean but not cut-out artificial.
+- The food should look like a real product that can be served by the restaurant.
+
+BUNDLE PRODUCT RULES:
 - The first uploaded image is always the main dish and must be the hero product in front.
-- Main dish must stay largest and closest to the camera.
+- Main dish must stay largest, closest to camera, and visually dominant.
 - {side_rule}
 - {drink_rule}
 - If both side/snack and drink are provided, place both behind the main dish, balanced left/right, with the main dish clearly in front.
+- Side and drink must be smaller than the main dish and must not block the main dish.
 - Do not replace the main dish with the side or drink.
 - Do not invent extra bundle items that were not uploaded.
+- Bundle must still be on pure white background with subtle contact shadows.
 
 PRODUCT COMPOSITION:
-- Center the product bundle.
-- Product or bundle should occupy about 68% to 80% of the image.
-- Keep full plate, bowl, box, cup, or important food parts visible.
+- Center the product or bundle.
+- Main product should occupy about 62% to 74% of the 720×720 canvas.
+- Bundle can occupy about 68% to 80% of the canvas.
+- Leave clean white breathing space around the product.
+- Keep the full plate, bowl, box, cup, container and important food parts visible.
 - Do not crop important parts.
-- Make it look realistic, premium, clean, appetizing and menu-ready.
+- Do not make the food touch the canvas edges.
 
 HOT FOOD EFFECT:
-If the main dish is hot food, add very subtle natural steam only if suitable.
-Steam must be light, elegant and realistic. Do not overdo smoke.
-If the item is cold food, dessert, or drink, do not add hot steam unless naturally suitable.
+- If the main dish is hot food, add only extremely subtle natural steam if it improves realism.
+- Steam must be light, elegant and barely visible.
+- Do not use heavy smoke.
+- Do not let steam make the image look AI-generated.
+- If the item is cold food, dessert, drink, packaged product, or not clearly hot, do not add steam.
 
 STRICT NEGATIVE:
 - No text.
@@ -987,8 +1017,15 @@ STRICT NEGATIVE:
 - No people.
 - No table scene.
 - No restaurant scene.
+- No colored background.
+- No props.
 - No unrelated ingredients.
 - No extra side or drink unless uploaded.
+- No AI fantasy style.
+- No 3D render.
+- No illustration.
+- No cartoon look.
+- No fake packaging label.
 
 STYLE OPTION:
 {normalize_style(style)}
