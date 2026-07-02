@@ -6,448 +6,671 @@
   <title>Food AI Studio</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --brand-primary: #006064;
-      --brand-primary-mid: #00838F;
-      --brand-primary-bright: #00ACC1;
-      --brand-primary-soft: #E0F7FA;
-      --brand-primary-soft-2: #B2EBF2;
-      --brand-primary-glow: rgba(0, 172, 193, .18);
-      --brand-secondary: #D22928;
-      --bg-soft: #F4FBFC;
-      --text-dark: #111827;
+      --ink: #172026;
+      --muted: #66737f;
+      --line: #dbe7ea;
+      --surface: #ffffff;
+      --panel: #f7fafb;
+      --teal: #006064;
+      --teal-2: #00838f;
+      --mint: #e5f7f8;
+      --coral: #d94f3d;
+      --amber: #f2aa30;
+      --green: #0f8f68;
+      --shadow: 0 18px 45px rgba(20, 58, 65, .10);
     }
 
     * { box-sizing: border-box; }
 
     body {
+      min-height: 100vh;
+      margin: 0;
       font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(0, 172, 193, .20), transparent 32%),
-        radial-gradient(circle at top right, rgba(0, 96, 100, .12), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(0, 131, 143, .14), transparent 38%),
-        linear-gradient(180deg, #F4FBFC 0%, #FFFFFF 42%, #F3FAFB 100%);
-      color: var(--text-dark);
+      background: #f3f7f8;
+      color: var(--ink);
+      letter-spacing: 0;
     }
 
-    .glass {
-      background: rgba(255,255,255,.84);
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(224,247,250,.88);
-      box-shadow: 0 24px 80px rgba(0,96,100,.10);
-    }
-
-    .soft-card {
-      background: rgba(255,255,255,.95);
-      border: 1px solid rgba(178,235,242,.70);
-      box-shadow: 0 18px 50px rgba(0,96,100,.07);
-    }
-
-    .brand-logo {
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-mid), var(--brand-primary-bright));
-    }
-
-    .field {
-      width: 100%;
+    .app-shell { max-width: 1480px; margin: 0 auto; padding: 20px; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border: 1px solid var(--line);
       border-radius: 18px;
-      border: 1px solid #dbecef;
-      background: #fff;
+      background: rgba(255,255,255,.92);
       padding: 14px 16px;
-      outline: none;
-      transition: .2s ease;
-      font-size: 15px;
+      box-shadow: 0 10px 30px rgba(20, 58, 65, .06);
+      position: sticky;
+      top: 12px;
+      z-index: 30;
+      backdrop-filter: blur(14px);
     }
 
-    .field:focus {
-      border-color: var(--brand-primary-mid);
-      box-shadow: 0 0 0 4px var(--brand-primary-glow);
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: #0f2f35;
+      color: white;
+      font-weight: 900;
+      box-shadow: inset 0 -10px 20px rgba(255,255,255,.08);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 7px 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      border-radius: 12px;
+      padding: 12px 15px;
+      font-weight: 900;
+      font-size: 14px;
+      transition: .18s ease;
+    }
+
+    .btn-primary {
+      background: #0f2f35;
+      color: white;
+      box-shadow: 0 12px 24px rgba(15, 47, 53, .18);
+    }
+
+    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); background: var(--teal); }
+    .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+
+    .btn-secondary {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #17383e;
+    }
+
+    .btn-secondary:hover:not(:disabled) { transform: translateY(-1px); border-color: #9fc7cc; background: #f6fbfc; }
+    .btn-secondary:disabled { opacity: .45; cursor: not-allowed; }
+
+    .workspace-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      padding: 28px 4px 20px;
+    }
+
+    .workspace-title {
+      word-break: keep-all;
+      line-height: 1.12;
+    }
+
+    .eyebrow {
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 10px;
+      min-width: 430px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px;
+    }
+
+    .metric strong { display: block; font-size: 16px; line-height: 1.2; }
+    .metric span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 440px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .control-panel,
+    .output-panel,
+    .history-panel {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .control-panel { padding: 18px; }
+    .output-panel { padding: 18px; }
+    .history-panel { padding: 18px; }
+
+    .section-block {
+      border-top: 1px solid #e8f0f2;
+      padding-top: 18px;
+      margin-top: 18px;
+    }
+
+    .section-block:first-child {
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      background: #0f2f35;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
     }
 
     .label {
       display: block;
       margin-bottom: 8px;
-      font-size: 13px;
-      font-weight: 800;
-      color: #374151;
-    }
-
-    .brand-text { color: var(--brand-primary); }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-mid), var(--brand-primary-bright));
-      color: white;
-      border-radius: 18px;
-      padding: 15px 18px;
+      color: #34434a;
+      font-size: 12px;
       font-weight: 900;
-      box-shadow: 0 16px 38px rgba(0,96,100,.24);
-      transition: .2s ease;
     }
 
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 20px 45px rgba(0,96,100,.32);
+    .field {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid #cfdde1;
+      border-radius: 13px;
+      background: #fff;
+      padding: 12px 14px;
+      outline: none;
+      color: #172026;
+      font-size: 14px;
+      transition: .18s ease;
     }
 
-    .btn-primary:disabled {
-      opacity: .6;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      border: 1px solid rgba(0,96,100,.26);
-      background: white;
-      color: var(--brand-primary);
-      border-radius: 18px;
-      padding: 15px 18px;
-      font-weight: 800;
-      transition: .2s ease;
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      background: var(--brand-primary);
-      color: white;
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary:disabled {
-      opacity: .45;
-      cursor: not-allowed;
-    }
+    .field:focus { border-color: var(--teal-2); box-shadow: 0 0 0 4px rgba(0,131,143,.13); }
 
     .type-card {
+      min-height: 82px;
       cursor: pointer;
-      border-radius: 22px;
-      border: 1px solid #dbecef;
+      border: 1px solid #d7e4e7;
+      border-radius: 15px;
       background: #fff;
-      padding: 16px;
-      transition: .2s ease;
-      min-height: 86px;
+      padding: 14px;
+      transition: .18s ease;
     }
 
-    .type-card:hover {
-      border-color: var(--brand-primary-mid);
-      background: var(--brand-primary-soft);
+    .type-card:hover { border-color: #9fc7cc; background: #f7fcfd; }
+    .type-card:has(input:checked) { border-color: var(--teal); background: var(--mint); box-shadow: inset 0 0 0 1px var(--teal); }
+
+    .upload-zone {
+      display: grid;
+      place-items: center;
+      min-height: 150px;
+      cursor: pointer;
+      border: 1.5px dashed #9fc7cc;
+      border-radius: 17px;
+      background: repeating-linear-gradient(45deg, #ffffff 0, #ffffff 12px, #f1f8f9 12px, #f1f8f9 24px);
+      padding: 18px;
+      text-align: center;
+      transition: .18s ease;
     }
 
-    .type-card:has(input:checked) {
-      border: 2px solid var(--brand-primary);
-      background: var(--brand-primary-soft);
-      box-shadow: 0 10px 28px rgba(0,96,100,.14);
-    }
+    .upload-zone:hover { border-color: var(--teal); background: #f7fcfd; }
 
     .upload-button {
-      border: 1px solid rgba(0,96,100,.22);
-      color: var(--brand-primary);
-      background: var(--brand-primary-soft);
+      border: 1px solid #b9d4d8;
+      border-radius: 12px;
+      background: #f0f9fa;
+      color: #17424a;
     }
 
-    .upload-button:hover {
-      border-color: var(--brand-primary);
-      background: var(--brand-primary-soft-2);
+    .switch-card {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      border: 1px solid #d7e4e7;
+      border-radius: 15px;
+      background: #fff;
+      padding: 13px;
+      cursor: pointer;
     }
 
-    .checker {
-      background-color: #fff;
-      background-image:
-        linear-gradient(45deg,#e6f6f8 25%,transparent 25%),
-        linear-gradient(-45deg,#e6f6f8 25%,transparent 25%),
-        linear-gradient(45deg,transparent 75%,#e6f6f8 75%),
-        linear-gradient(-45deg,transparent 75%,#e6f6f8 75%);
-      background-size: 24px 24px;
-      background-position: 0 0,0 12px,12px -12px,-12px 0;
+    .switch-card input {
+      margin-top: 3px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--teal);
     }
 
     .preview-box {
       aspect-ratio: 1080 / 600;
       overflow: hidden;
+      border: 1px solid #d7e4e7;
+      border-radius: 18px;
+      background: repeating-linear-gradient(45deg, #ffffff 0, #ffffff 12px, #f1f8f9 12px, #f1f8f9 24px);
     }
 
-    .stat-card { border-top: 4px solid var(--brand-primary-mid); }
-    .recent-blur { filter: blur(10px); transform: scale(1.02); }
-    .lock-layer { background: rgba(255,255,255,.70); backdrop-filter: blur(3px); }
+    .photo-check {
+      border: 1px solid #d7e4e7;
+      border-radius: 15px;
+      background: #fff;
+      padding: 13px;
+    }
+
+    .delivery-card {
+      border: 1px solid #d7e4e7;
+      border-radius: 15px;
+      background: #fff;
+      padding: 13px;
+    }
+
+    .recent-blur { filter: blur(9px); transform: scale(1.02); }
+    .lock-layer { background: rgba(255,255,255,.74); backdrop-filter: blur(4px); }
+
+    @media (max-width: 1120px) {
+      .workspace-head { grid-template-columns: 1fr; }
+      .metric-strip { min-width: 0; }
+      .studio-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell { padding: 12px; }
+      .topbar { position: static; }
+      .metric-strip { grid-template-columns: 1fr; }
+      .preview-box { aspect-ratio: 1 / 1; }
+    }
   </style>
 </head>
 
 <body>
-  <main class="min-h-screen px-4 py-5 md:px-8 md:py-8">
-    <section class="mx-auto max-w-7xl">
-
-      <header class="glass sticky top-4 z-30 mb-6 flex items-center justify-between rounded-[28px] px-4 py-3 md:px-6">
-        <div class="flex items-center gap-3">
-          <div class="brand-logo grid h-11 w-11 place-items-center rounded-2xl text-xl font-black text-white shadow-lg">AI</div>
-          <div>
-            <h1 class="text-lg font-black tracking-tight md:text-xl">Food AI Studio</h1>
-            <p class="text-xs font-medium text-gray-500">Food Delivery Visuals</p>
-          </div>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="flex items-center gap-3">
+        <div class="brand-mark">AI</div>
+        <div>
+          <h1 class="text-lg font-black leading-tight">Food AI Studio</h1>
+          <p class="text-xs font-bold text-gray-500">Malaysia delivery creative workspace</p>
         </div>
+      </div>
 
-        <div class="flex items-center gap-3">
-          <a href="/social-media-kit" class="btn-primary hidden px-4 py-3 text-sm md:inline-flex">
-            Social Media Kit ⭐
-          </a>
-
-          <button id="loginOpenBtn" type="button" class="btn-secondary px-4 py-3 text-sm">
-            Login / Register
-          </button>
-
-          <div id="userBox" class="hidden items-center gap-3">
-            <div class="flex flex-col leading-tight">
-              <span id="userEmailText" class="hidden max-w-[180px] truncate text-sm font-bold text-gray-700 md:inline"></span>
-
-              <div id="planInfoBox" class="hidden flex-col">
-                <span id="planText" class="text-xs font-black uppercase text-cyan-700"></span>
-                <span id="usageText" class="text-xs font-semibold text-gray-500"></span>
-              </div>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <span class="status-pill hidden md:inline-flex">Product images</span>
+        <span class="status-pill hidden md:inline-flex">Delivery banners</span>
+        <span class="status-pill hidden md:inline-flex">Social assets</span>
+        <a href="/social-media-kit" class="btn-secondary px-4 py-2 text-sm">Social Kit</a>
+        <button id="loginOpenBtn" type="button" class="btn-primary px-4 py-2 text-sm">Login</button>
+        <div id="userBox" class="hidden items-center gap-3">
+          <div class="text-right leading-tight">
+            <span id="userEmailText" class="hidden max-w-[180px] truncate text-sm font-black text-gray-700 md:block"></span>
+            <div id="planInfoBox" class="hidden flex-col">
+              <span id="planText" class="text-xs font-black uppercase text-[#006064]"></span>
+              <span id="usageText" class="text-xs font-semibold text-gray-500"></span>
             </div>
-
-            <button id="logoutBtn" type="button" class="btn-secondary px-4 py-3 text-sm">
-              Logout
-            </button>
           </div>
+          <button id="logoutBtn" type="button" class="btn-secondary px-4 py-2 text-sm">Logout</button>
         </div>
-      </header>
+      </div>
+    </header>
 
-      <section class="grid gap-6 lg:grid-cols-[420px_1fr]">
-        <aside class="soft-card rounded-[32px] p-5 md:p-6">
-          <div class="mb-6">
-            <p class="brand-text mb-2 text-sm font-extrabold">Create professional food visuals</p>
-            <h2 class="text-3xl font-black leading-tight tracking-tight md:text-4xl">生成高级外卖头图</h2>
-            <p class="mt-3 text-sm leading-6 text-gray-500">上传食物图片，AI 自动识别并生成适合外卖平台、海报和产品图的专业视觉素材。</p>
-          </div>
+    <section class="workspace-head">
+      <div>
+        <p class="eyebrow">Restaurant owner workflow</p>
+        <h2 class="workspace-title mt-2 max-w-4xl text-3xl font-black tracking-tight md:text-[42px]">Photo to Delivery Pack</h2>
+        <p class="mt-4 max-w-2xl text-sm font-medium leading-7 text-gray-600 md:text-base">选择平台包，上传食物图，系统会生成可用于 GrabFood、foodpanda、产品图、Banner 和社媒宣传的商业视觉。</p>
+      </div>
+      <div class="metric-strip">
+        <div class="metric"><strong>1 upload</strong><span>菜品图片输入</span></div>
+        <div class="metric"><strong>3 formats</strong><span>产品图 / Banner / Poster</span></div>
+        <div class="metric"><strong>ZIP pack</strong><span>PNG + JPG 下载</span></div>
+      </div>
+    </section>
 
-          <form class="space-y-5" id="generateForm" enctype="multipart/form-data">
-            <div>
-              <label class="label">图片类型</label>
-              <div class="grid grid-cols-3 gap-3">
-                <label class="type-card">
-                  <input type="radio" name="type" value="poster" checked class="sr-only">
-                  <div>
-                    <p class="font-black">Poster</p>
-                    <p class="mt-1 text-xs text-gray-400">1:1</p>
-                  </div>
-                </label>
-
-                <label class="type-card">
-                  <input type="radio" name="type" value="banner" class="sr-only">
-                  <div>
-                    <p class="font-black">Banner</p>
-                    <p class="mt-1 text-xs text-gray-400">1080×600</p>
-                  </div>
-                </label>
-
-                <label class="type-card">
-                  <input type="radio" name="type" value="product" class="sr-only">
-                  <div>
-                    <p class="font-black">Product</p>
-                    <p class="mt-1 text-xs text-gray-400">720×720</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label class="label">主标题 *</label>
-              <input class="field" name="title" placeholder="例如：香煎猪扒饭" required />
-            </div>
-
-            <div>
-              <label class="label">副标题 Optional</label>
-              <input class="field" name="subtitle" placeholder="例如：外酥内嫩，现点现煎" />
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="label">Badge Optional</label>
-                <input class="field" name="badge" placeholder="Must Try!" />
-              </div>
-              <div>
-                <label class="label">价格 Optional</label>
-                <input class="field" name="price" placeholder="RM 12.90" />
-              </div>
-            </div>
-
-            <div>
-              <label class="label">风格</label>
-              <select class="field" name="style">
-                <option selected>AI Auto Detect / AI 自动识别生图</option>
-                <option>Premium Food Photography / 专业外卖摄影</option>
-                <option>GrabFood Style / GrabFood 风格</option>
-                <option>Foodpanda Style / Foodpanda 风格</option>
-                <option>Luxury Restaurant / 高级餐厅风格</option>
-                <option>Japanese Clean Style / 日式干净风格</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="label">备注 / Outcome Requirement Optional</label>
-              <textarea class="field min-h-[110px] resize-none" name="note" placeholder="例如：背景更干净、食物更大、高级感、不要太多装饰、适合Foodpanda主图"></textarea>
-              <p class="mt-2 text-xs font-medium text-gray-400">AI 会尽量跟随备注，但不会违反安全区域、食物保留和文字规则。</p>
-            </div>
-
-            <div>
-              <label class="label">上传 Logo PNG Optional</label>
-              <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <label class="upload-button inline-flex cursor-pointer items-center justify-center rounded-[18px] px-5 py-3 text-sm font-black shadow-sm transition">
-                  <input id="logoInput" type="file" name="logo" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden">
-                  Upload Logo
-                </label>
-                <span id="logoStatus" class="text-sm font-semibold text-gray-400">Transparent PNG recommended</span>
-              </div>
-            </div>
-
-            <div class="rounded-3xl bg-[#F2FBFC] p-4">
-              <label class="label">上传食物图片 *</label>
-              <label class="checker grid min-h-[132px] cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-[#B2EBF2] bg-white/70 p-4 text-center transition hover:border-[var(--brand-primary)] hover:bg-[#E0F7FA]">
-                <input id="foodImageInput" type="file" name="food_image" accept="image/*" class="hidden" required>
+    <section class="studio-grid">
+      <aside class="control-panel">
+        <form class="space-y-0" id="generateForm" enctype="multipart/form-data">
+          <section class="section-block">
+            <div class="section-head">
+              <div class="flex items-center gap-3">
+                <span class="step-pill">1</span>
                 <div>
-                  <p id="foodImageText" class="font-black text-gray-700">Drop Food Image Here</p>
-                  <p id="foodImageSubText" class="mt-1 text-xs text-gray-400">PNG / JPG supported</p>
+                  <h3 class="font-black">Delivery setup</h3>
+                  <p class="text-xs font-semibold text-gray-500">选择要交付给老板的素材类型</p>
                 </div>
+              </div>
+            </div>
+
+            <label class="label">单张输出类型</label>
+            <div class="grid grid-cols-3 gap-3">
+              <label class="type-card">
+                <input type="radio" name="type" value="poster" checked class="sr-only">
+                <span class="block font-black">Poster</span>
+                <span class="mt-1 block text-xs font-bold text-gray-400">1:1</span>
+              </label>
+              <label class="type-card">
+                <input type="radio" name="type" value="banner" class="sr-only">
+                <span class="block font-black">Banner</span>
+                <span class="mt-1 block text-xs font-bold text-gray-400">1080×600</span>
+              </label>
+              <label class="type-card">
+                <input type="radio" name="type" value="product" class="sr-only">
+                <span class="block font-black">Product</span>
+                <span class="mt-1 block text-xs font-bold text-gray-400">720×720</span>
               </label>
             </div>
 
-            <div id="productBundleOptions" class="hidden rounded-3xl bg-[#F2FBFC] p-4">
-              <label class="label">Product Bundle Optional</label>
-              <p class="mb-3 text-xs font-medium text-gray-500">Product 模式可上传多张主食批量生成；Sides / Drink 会放在主食后方组成 bundle。</p>
+            <div class="mt-4">
+              <label class="label">平台交付包</label>
+              <select id="platformPackSelect" class="field" name="platform_pack">
+                <option value="single" selected>只生成上方选择的单张图片</option>
+                <option value="grabfood_menu">GrabFood Menu Ready：产品图 + Banner</option>
+                <option value="foodpanda_menu">foodpanda Menu Ready：产品图 + Poster</option>
+                <option value="malaysia_starter">Malaysia Starter Kit：产品图 + Banner + Poster</option>
+              </select>
+              <p id="platformPackHint" class="mt-2 text-xs font-bold text-gray-500">选择交付包后，系统会一次生成多个可下载规格。</p>
+            </div>
+          </section>
+
+          <section class="section-block">
+            <div class="section-head">
+              <div class="flex items-center gap-3">
+                <span class="step-pill">2</span>
+                <div>
+                  <h3 class="font-black">GrabFood overlay protection</h3>
+                  <p class="text-xs font-semibold text-gray-500">保留平台标签遮挡区域</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <label class="switch-card">
+                <input type="checkbox" name="hotdeal_safe_zone">
+                <span>
+                  <span class="block text-sm font-black text-gray-800">HotDeals safe zone</span>
+                  <span class="mt-1 block text-xs leading-5 text-gray-500">预留左上角 HOTDEALS 覆盖区，标题、食物和 badge 会避开。</span>
+                </span>
+              </label>
+              <label class="switch-card">
+                <input type="checkbox" name="signature_footer_safe_zone">
+                <span>
+                  <span class="block text-sm font-black text-gray-800">Signature footer safe zone</span>
+                  <span class="mt-1 block text-xs leading-5 text-gray-500">预留底部 Signature footer/ribbon 区，避免遮住食物和价格。</span>
+                </span>
+              </label>
+            </div>
+          </section>
+
+          <section class="section-block">
+            <div class="section-head">
+              <div class="flex items-center gap-3">
+                <span class="step-pill">3</span>
+                <div>
+                  <h3 class="font-black">Creative content</h3>
+                  <p class="text-xs font-semibold text-gray-500">GPT Image 2 会保留创意字体发挥</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label class="label">主标题 *</label>
+                <input class="field" name="title" placeholder="例如：香煎猪扒饭" required />
+              </div>
+              <div>
+                <label class="label">副标题 Optional</label>
+                <input class="field" name="subtitle" placeholder="例如：外酥内嫩，现点现煎" />
+              </div>
               <div class="grid grid-cols-2 gap-3">
-                <label class="upload-button inline-flex cursor-pointer items-center justify-center rounded-[18px] px-4 py-3 text-sm font-black shadow-sm transition">
-                  <input id="sideImageInput" type="file" name="side_image" accept="image/*" class="hidden">
-                  Upload Sides
-                </label>
-                <label class="upload-button inline-flex cursor-pointer items-center justify-center rounded-[18px] px-4 py-3 text-sm font-black shadow-sm transition">
-                  <input id="drinkImageInput" type="file" name="drink_image" accept="image/*" class="hidden">
-                  Upload Drink
-                </label>
+                <div>
+                  <label class="label">Badge Optional</label>
+                  <input class="field" name="badge" placeholder="Must Try!" />
+                </div>
+                <div>
+                  <label class="label">价格 Optional</label>
+                  <input class="field" name="price" placeholder="RM 12.90" />
+                </div>
               </div>
-              <div class="mt-2 grid grid-cols-2 gap-3">
-                <span id="sideImageStatus" class="text-xs font-semibold text-gray-400">No side uploaded</span>
-                <span id="drinkImageStatus" class="text-xs font-semibold text-gray-400">No drink uploaded</span>
-              </div>
-            </div>
-
-            <button id="generateButton" type="submit" class="btn-primary w-full">Generate Visuals</button>
-          </form>
-        </aside>
-
-        <section class="space-y-6">
-          <div class="soft-card rounded-[32px] p-4 md:p-6">
-            <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <h3 class="text-xl font-black">Live Preview</h3>
+                <label class="label">风格</label>
+                <select class="field" name="style">
+                  <option selected>AI Auto Detect / AI 自动识别生图</option>
+                  <option>Premium Food Photography / 专业外卖摄影</option>
+                  <option>GrabFood Style / GrabFood 风格</option>
+                  <option>Foodpanda Style / foodpanda 风格</option>
+                  <option>Luxury Restaurant / 高级餐厅风格</option>
+                  <option>Japanese Clean Style / 日式干净风格</option>
+                </select>
               </div>
-              <div class="flex gap-2">
-                <button id="regenerateButton" type="button" class="btn-secondary px-4 py-3 text-sm" disabled>Regenerate</button>
-                <button id="downloadButton" type="button" class="btn-primary px-4 py-3 text-sm" disabled>Download</button>
+            </div>
+          </section>
+
+          <section class="section-block">
+            <div class="section-head">
+              <div class="flex items-center gap-3">
+                <span class="step-pill">4</span>
+                <div>
+                  <h3 class="font-black">Brand and upload</h3>
+                  <p class="text-xs font-semibold text-gray-500">品牌设定与食物照片</p>
+                </div>
               </div>
             </div>
 
-            <div id="previewArea" class="preview-box checker relative grid place-items-center rounded-[28px] border border-[#B2EBF2] shadow-2xl">
+            <div class="space-y-4">
+              <div class="grid gap-3">
+                <input class="field" name="brand_name" placeholder="餐厅名，例如：Ah Seng Kopitiam" />
+                <input class="field" name="brand_colors" placeholder="品牌色，例如：红色 + 黄色 / teal + white" />
+                <select class="field" name="brand_tone">
+                  <option value="">选择品牌感觉</option>
+                  <option>Local Malaysian / 本地亲切</option>
+                  <option>Modern Clean / 现代干净</option>
+                  <option>Premium Restaurant / 高级餐厅</option>
+                  <option>Street Food Energy / 街边美食活力</option>
+                  <option>Minimal Delivery / 外卖平台干净图</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="label">备注 / Outcome Requirement Optional</label>
+                <textarea class="field min-h-[96px] resize-none" name="note" placeholder="例如：背景更干净、食物更大、高级感、不要太多装饰、适合 foodpanda 主图"></textarea>
+              </div>
+
+              <div>
+                <label class="label">上传 Logo PNG Optional</label>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <label class="upload-button inline-flex cursor-pointer items-center justify-center px-5 py-3 text-sm font-black transition">
+                    <input id="logoInput" type="file" name="logo" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden">
+                    Upload Logo
+                  </label>
+                  <span id="logoStatus" class="truncate text-sm font-bold text-gray-400">Transparent PNG recommended</span>
+                </div>
+              </div>
+
+              <div>
+                <label class="label">上传食物图片 *</label>
+                <label class="upload-zone">
+                  <input id="foodImageInput" type="file" name="food_image" accept="image/*" class="hidden" required>
+                  <span>
+                    <span id="foodImageText" class="block font-black text-gray-800">Drop Food Image Here</span>
+                    <span id="foodImageSubText" class="mt-1 block text-xs font-bold text-gray-500">PNG / JPG supported</span>
+                  </span>
+                </label>
+              </div>
+
+              <div id="photoQualityPanel" class="photo-check hidden">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <p class="text-xs font-black uppercase text-gray-400">Photo Check</p>
+                    <p id="photoQualitySummary" class="mt-1 text-sm font-bold text-gray-700"></p>
+                  </div>
+                  <div id="photoQualityScore" class="text-2xl font-black text-[#006064]">--</div>
+                </div>
+                <ul id="photoQualityList" class="mt-3 space-y-1 text-xs font-medium text-gray-500"></ul>
+              </div>
+
+              <div id="productBundleOptions" class="hidden rounded-2xl border border-[#d7e4e7] bg-[#f7fafb] p-4">
+                <label class="label">Product Bundle Optional</label>
+                <p class="mb-3 text-xs font-semibold text-gray-500">Product 模式可上传多张主食批量生成；Sides / Drink 会放在主食后方组成套餐图。</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <label class="upload-button inline-flex cursor-pointer items-center justify-center px-4 py-3 text-sm font-black transition">
+                    <input id="sideImageInput" type="file" name="side_image" accept="image/*" class="hidden">
+                    Upload Sides
+                  </label>
+                  <label class="upload-button inline-flex cursor-pointer items-center justify-center px-4 py-3 text-sm font-black transition">
+                    <input id="drinkImageInput" type="file" name="drink_image" accept="image/*" class="hidden">
+                    Upload Drink
+                  </label>
+                </div>
+                <div class="mt-2 grid grid-cols-2 gap-3">
+                  <span id="sideImageStatus" class="truncate text-xs font-semibold text-gray-400">No side uploaded</span>
+                  <span id="drinkImageStatus" class="truncate text-xs font-semibold text-gray-400">No drink uploaded</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <button id="generateButton" type="submit" class="btn-primary mt-5 w-full">Generate Delivery Assets</button>
+        </form>
+      </aside>
+
+      <section class="space-y-4">
+        <div class="output-panel">
+          <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p class="eyebrow">Output canvas</p>
+              <h3 class="mt-1 text-2xl font-black">Generated delivery assets</h3>
+              <p class="mt-1 text-sm font-semibold text-gray-500">预览、下载和确认平台安全区。</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button id="regenerateButton" type="button" class="btn-secondary px-4 py-2 text-sm" disabled>Regenerate</button>
+              <button id="downloadButton" type="button" class="btn-primary px-4 py-2 text-sm" disabled>Download</button>
+            </div>
+          </div>
+
+          <div id="previewArea" class="preview-box relative grid place-items-center">
+            <div class="text-center">
+              <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-white text-2xl font-black shadow">AI</div>
+              <p class="text-xl font-black text-gray-800">Your Visual Will Appear Here</p>
+              <p class="mt-2 text-sm font-bold text-gray-500">Upload food image and click Generate Delivery Assets</p>
+            </div>
+          </div>
+
+          <div id="deliveryPackPanel" class="mt-4 hidden rounded-2xl border border-[#d7e4e7] bg-[#f7fafb] p-4">
+            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p class="text-xs font-black uppercase text-gray-400">Delivery Pack</p>
+                <h4 id="deliveryPackTitle" class="mt-1 text-lg font-black text-gray-900"></h4>
+              </div>
+              <button id="bundleDownloadButton" type="button" class="btn-secondary px-4 py-2 text-sm" disabled>Download ZIP</button>
+            </div>
+            <div id="deliveryPackItems" class="mt-4 grid gap-3 md:grid-cols-3"></div>
+          </div>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-3">
+          <div class="metric"><strong>Photo to Pack</strong><span>一张菜图生成多平台素材</span></div>
+          <div class="metric"><strong>Ready to Upload</strong><span>含 PNG 与 JPG 下载包</span></div>
+          <div class="metric"><strong>Overlay Safe</strong><span>HotDeals 与 Signature 避让</span></div>
+        </div>
+
+        <div class="history-panel">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 class="text-xl font-black">Recent Designs</h3>
+              <p class="text-sm font-semibold text-gray-500">登录后可查看和下载历史作品。</p>
+            </div>
+            <button id="viewAllDesignsBtn" type="button" class="btn-secondary px-4 py-2 text-sm">View All</button>
+          </div>
+
+          <div id="recentDesigns" class="relative overflow-hidden rounded-2xl">
+            <div id="recentGrid" class="grid gap-4 md:grid-cols-3">
+              <div class="recent-blur aspect-[4/3] rounded-2xl bg-[#e5f7f8]"></div>
+              <div class="recent-blur aspect-[4/3] rounded-2xl bg-[#f4e7d2]"></div>
+              <div class="recent-blur aspect-[4/3] rounded-2xl bg-[#e8f0f2]"></div>
+            </div>
+
+            <div id="recentLockLayer" class="lock-layer absolute inset-0 grid place-items-center rounded-2xl">
               <div class="text-center">
-                <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg">
-                  <span class="text-2xl">✨</span>
-                </div>
-                <p class="text-xl font-black text-gray-800">Your Visual Will Appear Here</p>
-                <p class="mt-2 text-sm font-medium text-gray-400">Upload food image and click Generate Visuals</p>
+                <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-xl bg-white text-xs font-black shadow">LOCK</div>
+                <p class="text-lg font-black text-gray-900">Login to view your creations</p>
+                <p class="mt-1 text-sm font-semibold text-gray-500">登录后可以查看清晰的历史作品</p>
+                <button id="recentLoginBtn" type="button" class="btn-primary mt-4 px-5 py-2 text-sm">Login / Register</button>
               </div>
             </div>
           </div>
-
-          <div class="grid gap-4 md:grid-cols-3">
-            <div class="soft-card stat-card rounded-[26px] p-5">
-              <p class="text-sm font-black text-gray-400">Today</p>
-              <p class="brand-text mt-2 text-3xl font-black">24</p>
-              <p class="mt-1 text-sm text-gray-500">Generated images</p>
-            </div>
-
-            <div class="soft-card stat-card rounded-[26px] p-5">
-              <p class="text-sm font-black text-gray-400">Success</p>
-              <p class="brand-text mt-2 text-3xl font-black">98%</p>
-              <p class="mt-1 text-sm text-gray-500">Safe area matched</p>
-            </div>
-
-            <div class="soft-card stat-card rounded-[26px] p-5">
-              <p class="text-sm font-black text-gray-400">Mode</p>
-              <p class="brand-text mt-2 text-3xl font-black">Pro</p>
-              <p class="mt-1 text-sm text-gray-500">Food visual layout</p>
-            </div>
-          </div>
-
-          <div class="soft-card rounded-[32px] p-5 md:p-6">
-            <div class="mb-4 flex items-center justify-between">
-              <div>
-                <h3 class="text-xl font-black">Recent Designs</h3>
-                <p class="text-sm text-gray-500">生成过的作品可以这里查看。</p>
-              </div>
-              <button id="viewAllDesignsBtn" type="button" class="btn-secondary px-4 py-3 text-sm">View All</button>
-            </div>
-
-            <div id="recentDesigns" class="relative overflow-hidden rounded-3xl">
-              <div id="recentGrid" class="grid gap-4 md:grid-cols-3">
-                <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#B2EBF2] via-[#E0F7FA] to-white"></div>
-                <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#80DEEA] via-[#E0F7FA] to-white"></div>
-                <div class="recent-blur aspect-[4/3] rounded-3xl bg-gradient-to-br from-[#E0F7FA] via-white to-[#B2EBF2]"></div>
-              </div>
-
-              <div id="recentLockLayer" class="lock-layer absolute inset-0 grid place-items-center rounded-3xl">
-                <div class="text-center">
-                  <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-lg">🔒</div>
-                  <p class="text-lg font-black text-gray-900">Login to view your creations</p>
-                  <p class="mt-1 text-sm text-gray-500">登录后可以查看清晰的历史作品</p>
-                  <button id="recentLoginBtn" type="button" class="btn-primary mt-4 px-5 py-3 text-sm">Login / Register</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        </div>
       </section>
     </section>
   </main>
 
-<div id="designsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-  <div class="soft-card max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-[32px] p-6">
-    <div class="mb-5 flex items-center justify-between">
-      <div>
-        <h3 class="text-2xl font-black">My Designs</h3>
-        <p class="text-sm text-gray-500">查看和下载你生成过的作品</p>
+  <div id="designsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="control-panel max-h-[90vh] w-full max-w-6xl overflow-hidden p-6">
+      <div class="mb-5 flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-black">My Designs</h3>
+          <p class="text-sm font-semibold text-gray-500">查看和下载你生成过的作品</p>
+        </div>
+        <button id="designsCloseBtn" type="button" class="grid h-10 w-10 place-items-center rounded-full bg-gray-100 text-xl font-black">×</button>
       </div>
 
-      <button id="designsCloseBtn" type="button" class="grid h-10 w-10 place-items-center rounded-full bg-gray-100 text-xl font-black">
-        ×
-      </button>
-    </div>
+      <div class="mb-5 flex flex-wrap gap-2">
+        <button class="design-filter btn-primary px-4 py-2 text-sm" data-filter="all">All</button>
+        <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="poster">Poster</button>
+        <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="banner">Banner</button>
+        <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="product">Product</button>
+        <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="social_media">Social</button>
+      </div>
 
-    <div class="mb-5 flex flex-wrap gap-2">
-      <button class="design-filter btn-primary px-4 py-2 text-sm" data-filter="all">All</button>
-      <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="poster">Poster</button>
-      <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="banner">Banner</button>
-      <button class="design-filter btn-secondary px-4 py-2 text-sm" data-filter="product">Product</button>
-    </div>
-
-    <div id="myDesignsGrid" class="grid max-h-[65vh] gap-4 overflow-y-auto pr-2 md:grid-cols-3 lg:grid-cols-4">
-      <div class="col-span-full rounded-3xl bg-white p-8 text-center">
-        <p class="text-lg font-black text-gray-800">Loading...</p>
+      <div id="myDesignsGrid" class="grid max-h-[65vh] gap-4 overflow-y-auto pr-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="col-span-full rounded-2xl bg-white p-8 text-center">
+          <p class="text-lg font-black text-gray-800">Loading...</p>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
   <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="soft-card w-full max-w-md rounded-[32px] p-6">
+    <div class="control-panel w-full max-w-md p-6">
       <div class="mb-4 flex items-center justify-between">
         <div>
           <h3 class="text-xl font-black">Food AI Studio Account</h3>
-          <p class="mt-1 text-sm text-gray-500">Login or create your account</p>
+          <p class="mt-1 text-sm font-semibold text-gray-500">Login or create your account</p>
         </div>
-
-        <button id="authCloseBtn" type="button" class="grid h-10 w-10 place-items-center rounded-full bg-gray-100 text-xl font-black">
-          ×
-        </button>
+        <button id="authCloseBtn" type="button" class="grid h-10 w-10 place-items-center rounded-full bg-gray-100 text-xl font-black">×</button>
       </div>
 
       <div class="mb-4 grid grid-cols-2 gap-2">
@@ -462,12 +685,10 @@
           <label class="label">Email</label>
           <input id="loginEmail" type="email" placeholder="you@email.com" class="field" required>
         </div>
-
         <div>
           <label class="label">Password</label>
           <input id="loginPassword" type="password" placeholder="Your password" class="field" required>
         </div>
-
         <button type="submit" class="btn-primary w-full">Login</button>
       </form>
 
@@ -476,12 +697,10 @@
           <label class="label">Email</label>
           <input id="registerEmail" type="email" placeholder="you@email.com" class="field" required>
         </div>
-
         <div>
           <label class="label">Password</label>
           <input id="registerPassword" type="password" placeholder="Minimum 6 characters" class="field" minlength="6" required>
         </div>
-
         <button type="submit" class="btn-primary w-full">Create Account</button>
       </form>
 

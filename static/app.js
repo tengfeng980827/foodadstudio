@@ -14,9 +14,21 @@ const sideImageStatus = document.getElementById("sideImageStatus");
 const drinkImageStatus = document.getElementById("drinkImageStatus");
 const titleInput = form?.querySelector('input[name="title"]');
 const typeInputs = Array.from(document.querySelectorAll('input[name="type"]'));
+const platformPackSelect = document.getElementById("platformPackSelect");
+const platformPackHint = document.getElementById("platformPackHint");
 const generateButton = document.getElementById("generateButton");
 const regenerateButton = document.getElementById("regenerateButton");
 const downloadButton = document.getElementById("downloadButton");
+
+const photoQualityPanel = document.getElementById("photoQualityPanel");
+const photoQualityScore = document.getElementById("photoQualityScore");
+const photoQualitySummary = document.getElementById("photoQualitySummary");
+const photoQualityList = document.getElementById("photoQualityList");
+
+const deliveryPackPanel = document.getElementById("deliveryPackPanel");
+const deliveryPackTitle = document.getElementById("deliveryPackTitle");
+const deliveryPackItems = document.getElementById("deliveryPackItems");
+const bundleDownloadButton = document.getElementById("bundleDownloadButton");
 
 const loginOpenBtn = document.getElementById("loginOpenBtn");
 const recentLoginBtn = document.getElementById("recentLoginBtn");
@@ -44,9 +56,26 @@ const designsCloseBtn = document.getElementById("designsCloseBtn");
 const myDesignsGrid = document.getElementById("myDesignsGrid");
 
 let latestDownloadUrl = "";
+let latestBundleDownloadUrl = "";
 let latestGeneratedItems = [];
 let allUserDesigns = [];
 let currentDesignFilter = "all";
+
+const PLATFORM_HINTS = {
+  single: "选择交付包后，系统会一次生成多个可下载规格。",
+  grabfood_menu: "会生成 Product 720×720 与 Banner 1080×600，适合菜单和店铺活动图。",
+  foodpanda_menu: "会生成 Product 720×720 与 Poster 1080×1080，适合菜单主图和促销图。",
+  malaysia_starter: "会生成 Product、Banner、Poster，一次交付餐饮老板最常用的三种素材。"
+};
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
 function showAuthMessage(message) {
   if (!authMessage) return;
@@ -126,26 +155,20 @@ function updateAuthUI() {
     loginOpenBtn?.classList.add("hidden");
     userBox?.classList.remove("hidden");
     userBox?.classList.add("flex");
-
     if (userEmailText) userEmailText.textContent = email;
-
     planInfoBox?.classList.remove("hidden");
     planInfoBox?.classList.add("flex");
-
     recentLockLayer?.classList.add("hidden");
     loadRecentDesigns();
   } else {
     loginOpenBtn?.classList.remove("hidden");
     userBox?.classList.add("hidden");
     userBox?.classList.remove("flex");
-
     if (userEmailText) userEmailText.textContent = "";
     if (planText) planText.textContent = "";
     if (usageText) usageText.textContent = "";
-
     planInfoBox?.classList.add("hidden");
     planInfoBox?.classList.remove("flex");
-
     recentLockLayer?.classList.remove("hidden");
   }
 }
@@ -153,20 +176,14 @@ function updateAuthUI() {
 async function loadProfile() {
   const userId = localStorage.getItem("food_ai_user_id") || "";
   const email = localStorage.getItem("food_ai_user_email") || "";
-
   if (!userId) return;
 
   try {
-    const response = await fetch(
-      `/api/profile?user_id=${encodeURIComponent(userId)}&email=${encodeURIComponent(email)}`
-    );
-
+    const response = await fetch(`/api/profile?user_id=${encodeURIComponent(userId)}&email=${encodeURIComponent(email)}`);
     const data = await response.json();
-
     if (!response.ok || !data.success || !data.profile) return;
 
     const profile = data.profile;
-
     planInfoBox?.classList.remove("hidden");
     planInfoBox?.classList.add("flex");
 
@@ -178,7 +195,6 @@ async function loadProfile() {
 
     const used = profile.trial_used ?? 0;
     const limit = profile.trial_limit ?? 10;
-
     if (planText) planText.textContent = "TRIAL PLAN";
     if (usageText) usageText.textContent = `${used} / ${limit} Used`;
   } catch (error) {
@@ -220,7 +236,6 @@ registerForm?.addEventListener("submit", async function (event) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
     });
-
     const data = await response.json();
 
     if (!response.ok) {
@@ -229,7 +244,6 @@ registerForm?.addEventListener("submit", async function (event) {
 
     showAuthMessage("注册成功。请检查邮箱验证，或直接尝试登录。");
     showLoginTab();
-
     const loginEmail = document.getElementById("loginEmail");
     if (loginEmail) loginEmail.value = email;
   } catch (error) {
@@ -255,7 +269,6 @@ loginForm?.addEventListener("submit", async function (event) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password })
     });
-
     const data = await response.json();
 
     if (!response.ok) {
@@ -274,16 +287,20 @@ function getSelectedType() {
   return document.querySelector('input[name="type"]:checked')?.value || "poster";
 }
 
+function getSelectedPack() {
+  return platformPackSelect?.value || "single";
+}
+
 function updateFormMode() {
   const type = getSelectedType();
-  const isProduct = type === "product";
+  const pack = getSelectedPack();
+  const isSingleProduct = type === "product" && pack === "single";
+  const hasProductOutput = isSingleProduct || pack !== "single";
 
-  if (productBundleOptions) {
-    productBundleOptions.classList.toggle("hidden", !isProduct);
-  }
+  productBundleOptions?.classList.toggle("hidden", !hasProductOutput);
 
   if (foodImageInput) {
-    if (isProduct) {
+    if (isSingleProduct) {
       foodImageInput.setAttribute("multiple", "multiple");
     } else {
       foodImageInput.removeAttribute("multiple");
@@ -291,28 +308,95 @@ function updateFormMode() {
   }
 
   if (titleInput) {
-    titleInput.required = !isProduct;
-    titleInput.placeholder = isProduct ? "Product 可不填标题" : "例如：香煎猪扒饭";
+    titleInput.required = !isSingleProduct;
+    titleInput.placeholder = isSingleProduct ? "Product 可不填标题" : "例如：香煎猪扒饭";
+  }
+
+  if (platformPackHint) {
+    platformPackHint.textContent = PLATFORM_HINTS[pack] || PLATFORM_HINTS.single;
   }
 
   if (foodImageText) {
-    foodImageText.textContent = isProduct ? "Drop Product Images Here" : "Drop Food Image Here";
+    foodImageText.textContent = isSingleProduct ? "Drop Product Images Here" : "Drop Food Image Here";
   }
 
   if (foodImageSubText && (!foodImageInput?.files || !foodImageInput.files.length)) {
-    foodImageSubText.textContent = isProduct ? "可多选 PNG / JPG 批量生成 720×720" : "PNG / JPG supported";
+    foodImageSubText.textContent = isSingleProduct ? "可多选 PNG / JPG 批量生成 720×720" : "PNG / JPG supported";
   }
 }
 
-typeInputs.forEach(function (input) {
-  input.addEventListener("change", updateFormMode);
-});
+typeInputs.forEach(input => input.addEventListener("change", updateFormMode));
+platformPackSelect?.addEventListener("change", updateFormMode);
 
-updateFormMode();
+function renderPhotoQuality(report) {
+  if (!photoQualityPanel || !photoQualityScore || !photoQualitySummary || !photoQualityList) return;
+  if (!report) {
+    photoQualityPanel.classList.add("hidden");
+    return;
+  }
+
+  photoQualityPanel.classList.remove("hidden");
+  photoQualityScore.textContent = report.score ? `${report.score}/100` : "--";
+  photoQualitySummary.textContent = report.summary || `${report.width || ""}×${report.height || ""}`;
+
+  const suggestions = report.suggestions?.length
+    ? report.suggestions
+    : [`图片尺寸：${report.width || "-"}×${report.height || "-"}`];
+
+  photoQualityList.innerHTML = suggestions.map(item => `<li>${escapeHtml(item)}</li>`).join("");
+}
+
+function inspectLocalPhoto(file) {
+  if (!file) {
+    renderPhotoQuality(null);
+    return;
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  const img = new Image();
+
+  img.onload = function () {
+    const minEdge = Math.min(img.naturalWidth, img.naturalHeight);
+    let score = minEdge >= 1000 ? 86 : minEdge >= 750 ? 76 : minEdge >= 512 ? 62 : 48;
+    const suggestions = [];
+
+    if (minEdge < 750) {
+      suggestions.push("分辨率偏低，建议使用原图或靠近食物重拍。");
+    }
+    if (img.naturalWidth / img.naturalHeight > 1.65 || img.naturalHeight / img.naturalWidth > 1.65) {
+      score -= 8;
+      suggestions.push("画面比例较极端，建议让食物居中并保留四周空间。");
+    }
+    if (!suggestions.length) {
+      suggestions.push("尺寸适合生成，后端会继续检查亮度、清晰度和对比度。");
+    }
+
+    renderPhotoQuality({
+      score: Math.max(40, score),
+      summary: `本地初检：${img.naturalWidth}×${img.naturalHeight}`,
+      width: img.naturalWidth,
+      height: img.naturalHeight,
+      suggestions
+    });
+
+    URL.revokeObjectURL(objectUrl);
+  };
+
+  img.onerror = function () {
+    URL.revokeObjectURL(objectUrl);
+    renderPhotoQuality({
+      score: 0,
+      summary: "无法读取图片尺寸",
+      suggestions: ["请换一张 PNG、JPG 或 WEBP 食物图片。"]
+    });
+  };
+
+  img.src = objectUrl;
+}
 
 logoInput?.addEventListener("change", function () {
   if (logoInput.files && logoInput.files[0]) {
-    logoStatus.textContent = "✓ " + logoInput.files[0].name + " uploaded";
+    logoStatus.textContent = "已上传 " + logoInput.files[0].name;
     logoStatus.className = "text-sm font-bold text-green-600";
   } else {
     logoStatus.textContent = "Transparent PNG recommended";
@@ -322,22 +406,24 @@ logoInput?.addEventListener("change", function () {
 
 foodImageInput?.addEventListener("change", function () {
   const count = foodImageInput.files ? foodImageInput.files.length : 0;
-  const isProduct = getSelectedType() === "product";
+  const isSingleProduct = getSelectedType() === "product" && getSelectedPack() === "single";
 
   if (count > 0) {
-    foodImageText.textContent = isProduct && count > 1 ? `✓ ${count} product images uploaded` : "✓ Food image uploaded";
+    foodImageText.textContent = isSingleProduct && count > 1 ? `${count} product images uploaded` : "Food image uploaded";
     foodImageSubText.textContent = count > 1 ? `${count} files selected for batch generation` : foodImageInput.files[0].name;
     foodImageSubText.className = "mt-1 text-xs font-semibold text-green-600";
+    inspectLocalPhoto(foodImageInput.files[0]);
   } else {
-    foodImageText.textContent = isProduct ? "Drop Product Images Here" : "Drop Food Image Here";
-    foodImageSubText.textContent = isProduct ? "可多选 PNG / JPG 批量生成 720×720" : "PNG / JPG supported";
+    foodImageText.textContent = isSingleProduct ? "Drop Product Images Here" : "Drop Food Image Here";
+    foodImageSubText.textContent = isSingleProduct ? "可多选 PNG / JPG 批量生成 720×720" : "PNG / JPG supported";
     foodImageSubText.className = "mt-1 text-xs text-gray-400";
+    renderPhotoQuality(null);
   }
 });
 
 sideImageInput?.addEventListener("change", function () {
   if (sideImageInput.files && sideImageInput.files[0]) {
-    sideImageStatus.textContent = "✓ " + sideImageInput.files[0].name;
+    sideImageStatus.textContent = "已上传 " + sideImageInput.files[0].name;
     sideImageStatus.className = "text-xs font-bold text-green-600";
   } else {
     sideImageStatus.textContent = "No side uploaded";
@@ -347,7 +433,7 @@ sideImageInput?.addEventListener("change", function () {
 
 drinkImageInput?.addEventListener("change", function () {
   if (drinkImageInput.files && drinkImageInput.files[0]) {
-    drinkImageStatus.textContent = "✓ " + drinkImageInput.files[0].name;
+    drinkImageStatus.textContent = "已上传 " + drinkImageInput.files[0].name;
     drinkImageStatus.className = "text-xs font-bold text-green-600";
   } else {
     drinkImageStatus.textContent = "No drink uploaded";
@@ -360,42 +446,76 @@ function setLoadingState() {
   generateButton.textContent = "Generating...";
   regenerateButton.disabled = true;
   downloadButton.disabled = true;
+  bundleDownloadButton.disabled = true;
+  deliveryPackPanel?.classList.add("hidden");
 
-  previewArea.className = "preview-box checker relative grid place-items-center rounded-[28px] border border-[#B2EBF2] shadow-2xl";
+  previewArea.className = "preview-box relative grid place-items-center";
   previewArea.innerHTML = `
     <div class="text-center px-6">
-      <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg">
-        <span class="text-2xl">⏳</span>
-      </div>
+      <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-white text-sm font-black shadow">WAIT</div>
       <p class="text-xl font-black text-gray-800">Generating...</p>
-      <p class="mt-2 text-sm font-medium text-gray-400">AI is creating your food visual. Product batch may take longer depending on image count.</p>
+      <p class="mt-2 text-sm font-bold text-gray-500">AI is creating platform-ready delivery assets.</p>
     </div>
   `;
 }
 
 function resetButtonState() {
   generateButton.disabled = false;
-  generateButton.textContent = "Generate Visuals";
+  generateButton.textContent = "Generate Delivery Assets";
 }
 
 function showError(message) {
-  previewArea.className = "preview-box checker relative grid place-items-center rounded-[28px] border border-[#B2EBF2] shadow-2xl";
+  previewArea.className = "preview-box relative grid place-items-center";
   previewArea.innerHTML = `
     <div class="text-center px-6">
-      <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-white shadow-lg">
-        <span class="text-2xl">⚠️</span>
-      </div>
+      <div class="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-white text-sm font-black shadow">ERR</div>
       <p class="text-xl font-black text-red-600">Generate Failed</p>
-      <p class="mt-2 text-sm font-medium text-gray-500">${message}</p>
+      <p class="mt-2 text-sm font-bold text-gray-500">${escapeHtml(message)}</p>
     </div>
   `;
 }
 
-function showGeneratedImage(imageUrl, downloadUrl, items = []) {
-  latestGeneratedItems = items && items.length ? items : [{ image_url: imageUrl, download_url: downloadUrl || imageUrl }];
+function showDeliveryPack(data) {
+  latestBundleDownloadUrl = data.bundle_download_url || "";
+
+  if (!deliveryPackPanel || !deliveryPackTitle || !deliveryPackItems) return;
+
+  const pack = data.platform_pack;
+  const items = data.items || [];
+  if (!pack && items.length <= 1) {
+    deliveryPackPanel.classList.add("hidden");
+    return;
+  }
+
+  deliveryPackPanel.classList.remove("hidden");
+  deliveryPackTitle.textContent = pack?.label || "Generated Assets";
+  const activeSafeZones = [];
+  if (data.safe_zones?.hotdeal) activeSafeZones.push("HotDeals safe zone");
+  if (data.safe_zones?.signature_footer) activeSafeZones.push("Signature footer safe zone");
+
+  deliveryPackItems.innerHTML = items.map(item => `
+    <div class="delivery-card">
+      <p class="text-sm font-black text-gray-800">${escapeHtml(item.label || item.type || "Asset")}</p>
+      <p class="mt-1 text-xs font-semibold text-gray-500">${item.width || "-"}×${item.height || "-"}</p>
+      <p class="mt-1 text-xs font-medium text-gray-400">${escapeHtml(item.type || "")}</p>
+    </div>
+  `).join("") + (activeSafeZones.length ? `
+    <div class="delivery-card md:col-span-3">
+      <p class="text-xs font-black uppercase text-gray-400">Active overlay protection</p>
+      <p class="mt-1 text-sm font-bold text-gray-800">${escapeHtml(activeSafeZones.join(" + "))}</p>
+    </div>
+  ` : "");
+
+  bundleDownloadButton.disabled = !latestBundleDownloadUrl;
+}
+
+function showGeneratedImage(data) {
+  latestGeneratedItems = data.items?.length
+    ? data.items
+    : [{ image_url: data.image_url, download_url: data.download_url || data.image_url, filename: data.filename }];
   latestDownloadUrl = latestGeneratedItems[0].download_url || latestGeneratedItems[0].image_url;
 
-  previewArea.className = "preview-box relative overflow-hidden rounded-[28px] border border-[#B2EBF2] shadow-2xl bg-white";
+  previewArea.className = "preview-box relative overflow-hidden bg-white";
 
   if (latestGeneratedItems.length > 1) {
     previewArea.innerHTML = `
@@ -404,9 +524,12 @@ function showGeneratedImage(imageUrl, downloadUrl, items = []) {
           const img = item.image_url;
           const dl = item.download_url || img;
           return `
-            <div class="overflow-hidden rounded-2xl border border-[#B2EBF2] bg-white shadow-sm">
-              <img src="${img}?t=${Date.now()}" class="aspect-square w-full object-contain bg-white" alt="Generated product ${index + 1}">
-              <button type="button" class="batch-download w-full px-3 py-2 text-xs font-black text-[var(--brand-primary)]" data-url="${dl}">Download #${index + 1}</button>
+            <div class="overflow-hidden rounded-2xl border border-[#d7e4e7] bg-white shadow-sm">
+              <img src="${img}?t=${Date.now()}" class="aspect-square w-full object-contain bg-white" alt="${escapeHtml(item.label || `Generated ${index + 1}`)}">
+              <div class="p-3">
+                <p class="truncate text-xs font-black text-gray-700">${escapeHtml(item.label || `Asset ${index + 1}`)}</p>
+                <button type="button" class="batch-download mt-2 w-full rounded-xl border border-[#d7e4e7] px-3 py-2 text-xs font-black text-[#006064]" data-url="${escapeHtml(dl)}" data-filename="${escapeHtml(item.filename || "food-ai-design.png")}">Download</button>
+              </div>
             </div>
           `;
         }).join("")}
@@ -415,15 +538,18 @@ function showGeneratedImage(imageUrl, downloadUrl, items = []) {
 
     previewArea.querySelectorAll(".batch-download").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        downloadImage(btn.getAttribute("data-url"));
+        downloadImage(btn.getAttribute("data-url"), btn.getAttribute("data-filename"));
       });
     });
   } else {
-    previewArea.innerHTML = `
-      <img src="${imageUrl}?t=${Date.now()}" class="h-full w-full object-contain bg-white" alt="Generated food visual" />
-    `;
+    previewArea.innerHTML = `<img src="${data.image_url}?t=${Date.now()}" class="h-full w-full object-contain bg-white" alt="Generated food visual" />`;
   }
 
+  if (data.quality_reports && data.quality_reports[0]) {
+    renderPhotoQuality(data.quality_reports[0]);
+  }
+
+  showDeliveryPack(data);
   regenerateButton.disabled = false;
   downloadButton.disabled = false;
 }
@@ -463,7 +589,7 @@ async function generateVisual() {
       throw new Error(data.error || "Generate failed.");
     }
 
-    showGeneratedImage(data.image_url, data.download_url, data.items || []);
+    showGeneratedImage(data);
     saveWork(data.image_url, data.download_url);
     loadRecentDesigns();
     loadProfile();
@@ -483,29 +609,31 @@ form?.addEventListener("submit", function (event) {
 regenerateButton?.addEventListener("click", generateVisual);
 
 downloadButton?.addEventListener("click", async function () {
-  if (latestGeneratedItems.length > 1) {
-    for (const item of latestGeneratedItems) {
-      await downloadImage(item.download_url || item.image_url);
-    }
+  if (latestBundleDownloadUrl && latestGeneratedItems.length > 1) {
+    window.location.href = latestBundleDownloadUrl;
     return;
   }
 
   if (!latestDownloadUrl) return;
-  await downloadImage(latestDownloadUrl);
+  await downloadImage(latestDownloadUrl, latestGeneratedItems[0]?.filename);
 });
 
-async function downloadImage(imageUrl) {
+bundleDownloadButton?.addEventListener("click", function () {
+  if (latestBundleDownloadUrl) {
+    window.location.href = latestBundleDownloadUrl;
+  }
+});
+
+async function downloadImage(imageUrl, filename = "food-ai-design.png") {
   try {
     const response = await fetch(imageUrl);
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
-
     a.href = blobUrl;
-    a.download = "food-ai-design.png";
+    a.download = filename || "food-ai-design.png";
     document.body.appendChild(a);
     a.click();
-
     a.remove();
     window.URL.revokeObjectURL(blobUrl);
   } catch {
@@ -515,13 +643,11 @@ async function downloadImage(imageUrl) {
 
 function saveWork(imageUrl, downloadUrl) {
   const works = JSON.parse(localStorage.getItem("food_ai_works") || "[]");
-
   works.unshift({
     imageUrl,
     downloadUrl: downloadUrl || imageUrl,
     time: new Date().toLocaleString()
   });
-
   localStorage.setItem("food_ai_works", JSON.stringify(works.slice(0, 20)));
 }
 
@@ -540,7 +666,6 @@ async function loadRecentDesigns() {
     }
 
     const works = data.items || [];
-
     if (!works.length) {
       recentGrid.innerHTML = `
         <div class="col-span-full rounded-3xl bg-white p-8 text-center">
@@ -556,7 +681,7 @@ async function loadRecentDesigns() {
         <a href="${item.image_url}" target="_blank" class="block overflow-hidden rounded-3xl bg-white shadow">
           <img src="${item.image_url}" class="aspect-[4/3] w-full object-cover" alt="Food AI Design">
           <div class="p-3">
-            <p class="text-xs font-bold text-gray-700">${item.title || "Food Design"}</p>
+            <p class="text-xs font-bold text-gray-700">${escapeHtml(item.title || "Food Design")}</p>
             <p class="mt-1 text-xs font-semibold text-gray-500">${new Date(item.created_at).toLocaleString()}</p>
           </div>
         </a>
@@ -566,7 +691,7 @@ async function loadRecentDesigns() {
     recentGrid.innerHTML = `
       <div class="col-span-full rounded-3xl bg-white p-8 text-center">
         <p class="text-lg font-black text-red-600">Failed to load designs</p>
-        <p class="mt-1 text-sm text-gray-500">${error.message}</p>
+        <p class="mt-1 text-sm text-gray-500">${escapeHtml(error.message)}</p>
       </div>
     `;
   }
@@ -576,7 +701,6 @@ async function loadAllDesigns() {
   if (!myDesignsGrid) return;
 
   const userId = localStorage.getItem("food_ai_user_id") || "";
-
   if (!userId) {
     openAuthModal();
     showAuthMessage("请先登录查看 My Designs。");
@@ -603,7 +727,7 @@ async function loadAllDesigns() {
     myDesignsGrid.innerHTML = `
       <div class="col-span-full rounded-3xl bg-white p-8 text-center">
         <p class="text-lg font-black text-red-600">Failed to load designs</p>
-        <p class="mt-1 text-sm text-gray-500">${error.message}</p>
+        <p class="mt-1 text-sm text-gray-500">${escapeHtml(error.message)}</p>
       </div>
     `;
   }
@@ -638,17 +762,13 @@ function renderMyDesigns() {
         <a href="${imageUrl}" target="_blank">
           <img src="${imageUrl}" class="aspect-[4/3] w-full object-cover" alt="Food AI Design">
         </a>
-
         <div class="p-3">
-          <p class="truncate text-sm font-black text-gray-800">${title}</p>
-          <p class="mt-1 text-xs font-semibold uppercase text-gray-400">${type}</p>
-          <p class="mt-1 text-xs text-gray-400">${dateText}</p>
-
+          <p class="truncate text-sm font-black text-gray-800">${escapeHtml(title)}</p>
+          <p class="mt-1 text-xs font-semibold uppercase text-gray-400">${escapeHtml(type)}</p>
+          <p class="mt-1 text-xs text-gray-400">${escapeHtml(dateText)}</p>
           <div class="mt-3 grid grid-cols-2 gap-2">
             <a href="${imageUrl}" target="_blank" class="btn-secondary px-3 py-2 text-center text-xs">Open</a>
-            <button type="button" class="download-design-btn btn-primary px-3 py-2 text-xs" data-url="${imageUrl}">
-              Download
-            </button>
+            <button type="button" class="download-design-btn btn-primary px-3 py-2 text-xs" data-url="${imageUrl}">Download</button>
           </div>
         </div>
       </div>
@@ -688,7 +808,6 @@ document.querySelectorAll(".design-filter").forEach(function (btn) {
 
     btn.classList.add("btn-primary");
     btn.classList.remove("btn-secondary");
-
     renderMyDesigns();
   });
 });
@@ -696,15 +815,14 @@ document.querySelectorAll(".design-filter").forEach(function (btn) {
 myDesignsGrid?.addEventListener("click", async function (event) {
   const btn = event.target.closest(".download-design-btn");
   if (!btn) return;
-
   const imageUrl = btn.dataset.url;
   if (!imageUrl) return;
-
   await downloadImage(imageUrl);
 });
 
 showLoginTab();
 updateAuthUI();
+updateFormMode();
 
 if (isLoggedIn()) {
   loadProfile();
