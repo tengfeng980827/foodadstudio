@@ -1,11 +1,11 @@
 {
-  "name": "Food AI Studio",
-  "short_name": "Food AI",
-  "description": "AI tool for Malaysian food delivery product photos, banners, posters and social media kits.",
+  "name": "外卖生图",
+  "short_name": "外卖生图",
+  "description": "AI 外卖头图和 Banner 生成工具",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F4FBFC",
-  "theme_color": "#006064",
+  "background_color": "#fffaf5",
+  "theme_color": "#ff7a1a",
   "orientation": "portrait",
   "icons": [
     {

@@ -1,8 +1,6 @@
 import os
 import time
 import base64
-import io
-import zipfile
 from pathlib import Path
 from typing import Optional
 
@@ -10,7 +8,7 @@ import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
 from openai import OpenAI
-from PIL import Image, ImageFilter, ImageStat
+from PIL import Image
 from werkzeug.utils import secure_filename
 
 
@@ -60,35 +58,6 @@ SOCIAL_OUTPUTS = {
     "portrait": {"label": "Portrait Post", "width": 1080, "height": 1350, "openai_size": "1024x1536", "resize": "cover"},
     "story": {"label": "Story / Status", "width": 1080, "height": 1920, "openai_size": "1024x1536", "resize": "cover"},
     "facebook_ad": {"label": "Facebook Ad", "width": 1200, "height": 628, "openai_size": "1536x1024", "resize": "cover"},
-}
-
-VISUAL_OUTPUTS = {
-    "product": {"label": "Platform Product Photo", "width": PRODUCT_W, "height": PRODUCT_H},
-    "poster": {"label": "Square Promo Poster", "width": POSTER_W, "height": POSTER_H},
-    "banner": {"label": "Delivery Banner", "width": BANNER_W, "height": BANNER_H},
-}
-
-PLATFORM_PACKS = {
-    "single": {
-        "label": "Single Output",
-        "types": [],
-        "description": "Generate the selected output only.",
-    },
-    "grabfood_menu": {
-        "label": "GrabFood Menu Ready",
-        "types": ["product", "banner"],
-        "description": "Product photo plus a 9:5 style delivery banner for GrabFood storefront usage.",
-    },
-    "foodpanda_menu": {
-        "label": "foodpanda Menu Ready",
-        "types": ["product", "poster"],
-        "description": "Clean menu product photo plus square promo creative for foodpanda and menu campaigns.",
-    },
-    "malaysia_starter": {
-        "label": "Malaysia Starter Kit",
-        "types": ["product", "banner", "poster"],
-        "description": "A complete first delivery pack for Malaysian restaurant owners.",
-    },
 }
 
 _client: Optional[OpenAI] = None
@@ -468,175 +437,6 @@ def list_recent_outputs(limit: int = 12):
     ]
 
 
-def clamp(value: float, low: float = 0, high: float = 100) -> float:
-    return max(low, min(high, value))
-
-
-def assess_photo_quality(image_path: str) -> dict:
-    """
-    Lightweight local quality check for merchant-uploaded food photos.
-    It does not block generation; it gives the owner practical shooting advice.
-    """
-    try:
-        with Image.open(image_path) as img:
-            width, height = img.size
-            sample = img.convert("RGB")
-            sample.thumbnail((640, 640))
-
-            gray = sample.convert("L")
-            stats = ImageStat.Stat(sample)
-            gray_stats = ImageStat.Stat(gray)
-            edge_stats = ImageStat.Stat(gray.filter(ImageFilter.FIND_EDGES))
-
-            brightness = gray_stats.mean[0]
-            contrast = gray_stats.stddev[0]
-            sharpness = edge_stats.mean[0]
-            min_edge = min(width, height)
-            aspect_ratio = width / height if height else 1
-
-            if min_edge >= 1000:
-                resolution_score = 100
-            elif min_edge >= 750:
-                resolution_score = 86
-            elif min_edge >= 512:
-                resolution_score = 68
-            else:
-                resolution_score = 45
-
-            brightness_score = clamp(100 - abs(brightness - 140) * 0.85)
-            contrast_score = clamp((contrast / 58) * 100)
-            sharpness_score = clamp(sharpness * 3.8)
-
-            score = round(
-                resolution_score * 0.32
-                + brightness_score * 0.24
-                + contrast_score * 0.20
-                + sharpness_score * 0.24
-            )
-
-            suggestions = []
-            if min_edge < 750:
-                suggestions.append("照片分辨率偏低，建议靠近食物重拍或使用原图上传。")
-            if brightness < 85:
-                suggestions.append("照片偏暗，建议靠近窗边或用白灯补光。")
-            elif brightness > 210:
-                suggestions.append("照片偏亮，建议降低曝光，避免白色盘子过曝。")
-            if contrast < 34:
-                suggestions.append("食物层次不够明显，建议换干净背景并避开强反光。")
-            if sharpness < 10:
-                suggestions.append("照片可能有点模糊，建议手机对焦后再拍。")
-            if aspect_ratio < 0.65 or aspect_ratio > 1.65:
-                suggestions.append("画面比例较极端，建议让食物居中并保留四周空间。")
-
-            if score >= 85:
-                grade = "Excellent"
-                summary = "照片质量很好，可以直接生成商业图。"
-            elif score >= 70:
-                grade = "Good"
-                summary = "照片可用，AI 会进一步增强光线和质感。"
-            elif score >= 55:
-                grade = "Fair"
-                summary = "照片可生成，但重拍会明显提升成品。"
-            else:
-                grade = "Needs Retake"
-                summary = "建议先重拍，成品稳定性会更高。"
-
-            return {
-                "score": score,
-                "grade": grade,
-                "summary": summary,
-                "width": width,
-                "height": height,
-                "brightness": round(brightness, 1),
-                "contrast": round(contrast, 1),
-                "sharpness": round(sharpness, 1),
-                "suggestions": suggestions[:4],
-                "channels": {
-                    "resolution": round(resolution_score),
-                    "brightness": round(brightness_score),
-                    "contrast": round(contrast_score),
-                    "sharpness": round(sharpness_score),
-                },
-            }
-    except Exception as e:
-        return {
-            "score": 0,
-            "grade": "Unknown",
-            "summary": "照片质量检查失败，但仍可尝试生成。",
-            "suggestions": [str(e)],
-        }
-
-
-def resolve_visual_types(visual_type: str, platform_pack: str) -> list[str]:
-    pack = PLATFORM_PACKS.get((platform_pack or "single").lower(), PLATFORM_PACKS["single"])
-    if pack["types"]:
-        return pack["types"]
-
-    visual_type = (visual_type or "poster").lower()
-    if visual_type not in VISUAL_OUTPUTS:
-        visual_type = "poster"
-    return [visual_type]
-
-
-def get_pack_summary(platform_pack: str, visual_types: list[str]) -> dict:
-    key = (platform_pack or "single").lower()
-    pack = PLATFORM_PACKS.get(key, PLATFORM_PACKS["single"])
-    return {
-        "key": key if key in PLATFORM_PACKS else "single",
-        "label": pack["label"],
-        "description": pack["description"],
-        "deliverables": [
-            {
-                "type": item_type,
-                "label": VISUAL_OUTPUTS[item_type]["label"],
-                "width": VISUAL_OUTPUTS[item_type]["width"],
-                "height": VISUAL_OUTPUTS[item_type]["height"],
-            }
-            for item_type in visual_types
-        ],
-    }
-
-
-def build_business_context_note(
-    note: str,
-    platform_pack: str,
-    brand_name: str = "",
-    brand_colors: str = "",
-    brand_tone: str = "",
-) -> str:
-    additions = []
-    pack = PLATFORM_PACKS.get((platform_pack or "single").lower())
-    if pack and platform_pack != "single":
-        additions.append(
-            f"Target delivery package: {pack['label']}. {pack['description']} "
-            "Design for Malaysian delivery and social commerce usage."
-        )
-    elif (platform_pack or "").lower() == "social_media":
-        additions.append(
-            "Target delivery package: Social Media Kit. Create assets for Malaysian restaurants "
-            "to post on Instagram, Facebook, WhatsApp Status and paid social placements."
-        )
-    if clean_text(brand_name):
-        additions.append(
-            f'Brand context: "{clean_text(brand_name)}". Use it as business context only; '
-            "do not invent extra brand text unless it appears in the uploaded logo or user-provided title."
-        )
-    if clean_text(brand_colors):
-        additions.append(f"Preferred brand colors: {clean_text(brand_colors)}.")
-    if clean_text(brand_tone):
-        additions.append(f"Brand mood/style: {clean_text(brand_tone)}.")
-
-    cleaned_note = clean_text(note)
-    if additions:
-        return "\n".join([cleaned_note, *additions]).strip()
-    return cleaned_note
-
-
-def bundle_download_url(filenames: list[str]) -> str:
-    safe_names = [secure_filename(Path(name).name) for name in filenames if name]
-    return f"/download-bundle?files={','.join(safe_names)}" if safe_names else ""
-
-
 # ======================================================
 # PROMPT HELPERS
 # ======================================================
@@ -660,10 +460,6 @@ def normalize_style(style: str) -> str:
 
 def clean_text(value: str) -> str:
     return (value or "").strip()
-
-
-def truthy_form_value(value: str) -> bool:
-    return str(value or "").strip().lower() in {"1", "true", "yes", "on", "checked"}
 
 
 def optional_text_rules(title: str, subtitle: str, badge: str, price: str) -> str:
@@ -719,135 +515,6 @@ TYPOGRAPHY REQUIREMENTS:
 - Do not invent extra words.
 - Do not create fake platform text, fake discount text, fake labels, watermark, random words or brand marks.
 """
-
-
-def grabfood_overlay_safe_zone_rules(
-    visual_type: str,
-    hotdeal_safe_zone: bool = False,
-    signature_footer_safe_zone: bool = False,
-) -> str:
-    """
-    Extra GrabFood app overlay safe zones.
-    These rules are appended only when the merchant toggles HotDeals or Signature Footer.
-    Normal generation remains unchanged.
-    """
-    if not hotdeal_safe_zone and not signature_footer_safe_zone:
-        return ""
-
-    visual_type = (visual_type or "poster").lower()
-
-    if visual_type == "product":
-        rules = [
-            "GRABFOOD OVERLAY SAFE ZONE MODE FOR 1:1 MENU IMAGE:",
-            "- These are external app overlay reservation zones, not visible design boxes.",
-            "- Do not draw safe zone guides, boxes, rulers, dashed lines, or app UI.",
-            "- Keep the food accurate and appetizing while leaving reserved overlay space clean.",
-        ]
-        if hotdeal_safe_zone:
-            rules.extend([
-                "",
-                "HOTDEALS OVERLAY RESERVATION:",
-                "- GrabFood commonly places a HOTDEALS-style orange pill near the top-left of the menu image.",
-                "- Reserve X 0 to 260, Y 0 to 105 on the 720x720 product canvas for that app overlay.",
-                "- No important food, garnish, steam, container rim, logo, text, badge, or bright detail inside X 0 to 260, Y 0 to 105.",
-                "- Place the main food identity mostly below Y 125 and away from the top-left overlay zone.",
-            ])
-        if signature_footer_safe_zone:
-            rules.extend([
-                "",
-                "SIGNATURE FOOTER OVERLAY RESERVATION:",
-                "- GrabFood Signature-style footer/ribbon can appear near the bottom edge of the menu image.",
-                "- Reserve X 0 to 720, Y 595 to 720 on the 720x720 product canvas for the app footer overlay.",
-                "- No important food, container edge, garnish, text, logo, steam, or shadow detail inside X 0 to 720, Y 595 to 720.",
-                "- Keep the full food product visible mainly inside X 80 to 640, Y 125 to 580.",
-            ])
-        rules.extend([
-            "",
-            "PRODUCT SAFE COMPOSITION OVERRIDE:",
-            "- If overlay reservations are active, shrink and lift the food slightly rather than cropping it.",
-            "- Important food details must remain inside the unblocked safe area.",
-        ])
-        return "\n".join(rules)
-
-    rules = [
-        "GRABFOOD OVERLAY SAFE ZONE MODE FOR 1:1 POSTER:",
-        "- These rules are active only because the merchant selected HotDeals and/or Signature Footer safe zones.",
-        "- The normal poster formula still applies, but these overlay reservation rules have higher priority.",
-        "- Do not draw safe zone guides, colored boxes, rulers, dashed lines, or app UI in the final image.",
-        "- Do not create fake GrabFood logos or fake platform interface elements.",
-    ]
-
-    if hotdeal_safe_zone:
-        rules.extend([
-            "",
-            "HOTDEALS OVERLAY RESERVATION:",
-            "- GrabFood commonly places the HOTDEALS pill/tag over the upper-left of food cards.",
-            "- Reserve X 0 to 360, Y 0 to 155 on the 1080x1080 canvas for that app overlay.",
-            "- The reserved HotDeals overlay zone must contain only simple background / negative space.",
-            "- No title, subtitle, badge, price, logo, food, plate, bowl, cup, garnish, steam, smoke, or important decoration inside X 0 to 360, Y 0 to 155.",
-            "- Shift the AI-designed main title below the HotDeals reservation.",
-            "- When HotDeals is active, the main title must stay inside X 70 to 620, Y 165 to 300.",
-            "- When HotDeals is active, the subtitle must stay inside X 70 to 620, Y 305 to 390.",
-            "- When HotDeals is active, important food details should stay below Y 390 unless they are safely on the right side and do not touch the title.",
-        ])
-
-    if signature_footer_safe_zone:
-        rules.extend([
-            "",
-            "SIGNATURE FOOTER OVERLAY RESERVATION:",
-            "- GrabFood Signature-style footer/ribbon can appear at the bottom of a food card, often bottom-right or across the lower edge.",
-            "- Reserve X 0 to 1080, Y 880 to 1080 on the 1080x1080 canvas for that app footer overlay.",
-            "- The reserved Signature Footer zone must contain only simple background / negative space.",
-            "- No title, subtitle, badge, price, logo, food, plate, bowl, cup, garnish, steam, smoke, or important decoration inside X 0 to 1080, Y 880 to 1080.",
-            "- Keep important food details above Y 860.",
-            "- If a user badge is provided, place it inside X 70 to 420, Y 700 to 835.",
-            "- If a price is provided, place it inside X 650 to 1010, Y 700 to 835.",
-            "- Badge and price must not overlap the future footer reservation.",
-        ])
-
-    rules.extend([
-        "",
-        "COMBINED OVERLAY SAFETY:",
-        "- All custom GPT Image 2 typography is still encouraged: bold, premium, hand-lettered, modern Chinese or editorial food-ad typography.",
-        "- Creative typography must fit inside the adjusted safe areas and must not enter any overlay reservation zone.",
-        "- If the title, badge, or price is long, reduce size or use tighter layout instead of entering the overlay reservation zones.",
-        "- Food must remain recognizable and appetizing, but it must not sit under the HotDeals or Signature Footer overlay reservations.",
-        "- If HotDeals and Signature Footer are both active, keep the hero food mainly inside X 360 to 980, Y 390 to 850, and keep title/subtitle inside the adjusted safe areas.",
-    ])
-    return "\n".join(rules)
-
-
-def poster_absolute_negative_rules(
-    hotdeal_safe_zone: bool = False,
-    signature_footer_safe_zone: bool = False,
-) -> str:
-    title_zone = "X 70 to 620, Y 165 to 300" if hotdeal_safe_zone else "X 70 to 620, Y 80 to 250"
-    subtitle_zone = "X 70 to 620, Y 305 to 390" if hotdeal_safe_zone else "X 70 to 620, Y 255 to 345"
-    badge_zone = "X 70 to 420, Y 700 to 835" if signature_footer_safe_zone else "X 70 to 420, Y 830 to 1010"
-    price_zone = "X 650 to 1010, Y 700 to 835" if signature_footer_safe_zone else "X 650 to 1010, Y 830 to 1010"
-
-    rules = [
-        "ABSOLUTE NEGATIVE RULES:",
-        f"- No title outside {title_zone}.",
-        f"- No subtitle outside {subtitle_zone}.",
-        f"- No badge outside {badge_zone}.",
-        f"- No price outside {price_zone}.",
-        "- No food, text, steam, smoke or decoration in logo clean zone X 800 to 1030, Y 60 to 210.",
-    ]
-
-    if hotdeal_safe_zone:
-        rules.append("- No food, text, badge, price, logo, steam, smoke or decoration in HotDeals overlay reservation X 0 to 360, Y 0 to 155.")
-    if signature_footer_safe_zone:
-        rules.append("- No food, text, badge, price, logo, steam, smoke or decoration in Signature Footer overlay reservation X 0 to 1080, Y 880 to 1080.")
-
-    rules.extend([
-        "- No safe area guide lines.",
-        "- No visible boxes showing safe area.",
-        "- No rulers.",
-        "- No dashed lines.",
-        "- No template guides.",
-    ])
-    return "\n".join(rules)
 
 
 # ======================================================
@@ -1076,16 +743,7 @@ USER TEXT:
 """
 
 
-def build_poster_prompt(
-    title: str,
-    subtitle: str,
-    badge: str,
-    price: str,
-    style: str,
-    note: str = "",
-    hotdeal_safe_zone: bool = False,
-    signature_footer_safe_zone: bool = False,
-) -> str:
+def build_poster_prompt(title: str, subtitle: str, badge: str, price: str, style: str, note: str = "") -> str:
     return f"""
 Analyze the uploaded food image carefully.
 
@@ -1250,9 +908,17 @@ OPTIONAL RULES:
 - Only use user-provided text.
 - Do not invent additional words.
 
-{grabfood_overlay_safe_zone_rules("poster", hotdeal_safe_zone, signature_footer_safe_zone)}
-
-{poster_absolute_negative_rules(hotdeal_safe_zone, signature_footer_safe_zone)}
+ABSOLUTE NEGATIVE RULES:
+- No title outside X 70 to 620, Y 80 to 250.
+- No subtitle outside X 70 to 620, Y 255 to 345.
+- No badge outside X 70 to 420, Y 830 to 1010.
+- No price outside X 650 to 1010, Y 830 to 1010.
+- No food, text, steam, smoke or decoration in logo clean zone X 800 to 1030, Y 60 to 210.
+- No safe area guide lines.
+- No visible boxes showing safe area.
+- No rulers.
+- No dashed lines.
+- No template guides.
 
 STYLE OPTION:
 {normalize_style(style)}
@@ -1264,14 +930,7 @@ USER TEXT:
 """
 
 
-def build_product_prompt(
-    style: str,
-    note: str = "",
-    has_side: bool = False,
-    has_drink: bool = False,
-    hotdeal_safe_zone: bool = False,
-    signature_footer_safe_zone: bool = False,
-) -> str:
+def build_product_prompt(style: str, note: str = "", has_side: bool = False, has_drink: bool = False) -> str:
     side_rule = "A side/snack image is provided. Use the uploaded side/snack as a real supporting item. Place it behind the main dish, slightly to one side, smaller than the main dish." if has_side else "No side/snack image is provided. Do not invent any side/snack."
     drink_rule = "A drink image is provided. Use the uploaded drink as a real supporting item. Place it behind the main dish, slightly to one side, smaller than the main dish." if has_drink else "No drink image is provided. Do not invent any drink."
 
@@ -1347,8 +1006,6 @@ PRODUCT COMPOSITION:
 - Keep the full plate, bowl, box, cup, container and important food parts visible.
 - Do not crop important parts.
 - Do not make the food touch the canvas edges.
-
-{grabfood_overlay_safe_zone_rules("product", hotdeal_safe_zone, signature_footer_safe_zone)}
 
 HOT FOOD EFFECT:
 - If the main dish is hot food, add only extremely subtle natural steam if it improves realism.
@@ -1617,8 +1274,6 @@ def generate_visual(
     note: str = "",
     side_path: str = "",
     drink_path: str = "",
-    hotdeal_safe_zone: bool = False,
-    signature_footer_safe_zone: bool = False,
 ) -> str:
     visual_type = (visual_type or "poster").lower()
 
@@ -1628,28 +1283,12 @@ def generate_visual(
         suffix = "banner_1080x600"
         target_w, target_h = BANNER_W, BANNER_H
     elif visual_type == "product":
-        prompt = build_product_prompt(
-            style,
-            note,
-            has_side=bool(side_path),
-            has_drink=bool(drink_path),
-            hotdeal_safe_zone=hotdeal_safe_zone,
-            signature_footer_safe_zone=signature_footer_safe_zone,
-        )
+        prompt = build_product_prompt(style, note, has_side=bool(side_path), has_drink=bool(drink_path))
         openai_size = "1024x1024"
         suffix = "product_720x720"
         target_w, target_h = PRODUCT_W, PRODUCT_H
     else:
-        prompt = build_poster_prompt(
-            title,
-            subtitle,
-            badge,
-            price,
-            style,
-            note,
-            hotdeal_safe_zone=hotdeal_safe_zone,
-            signature_footer_safe_zone=signature_footer_safe_zone,
-        )
+        prompt = build_poster_prompt(title, subtitle, badge, price, style, note)
         openai_size = "1024x1024"
         suffix = "poster_1080x1080"
         target_w, target_h = POSTER_W, POSTER_H
@@ -1691,27 +1330,12 @@ def social_media_kit_page():
 def generate():
     try:
         visual_type = request.form.get("type", "poster")
-        platform_pack = request.form.get("platform_pack", "single").strip().lower()
         title = request.form.get("title", "").strip()
         subtitle = request.form.get("subtitle", "").strip()
         badge = request.form.get("badge", "").strip()
         price = request.form.get("price", "").strip()
         style = request.form.get("style", "AI Auto Detect").strip()
         note = request.form.get("note", "").strip()
-        brand_name = request.form.get("brand_name", "").strip()
-        brand_colors = request.form.get("brand_colors", "").strip()
-        brand_tone = request.form.get("brand_tone", "").strip()
-        hotdeal_safe_zone = truthy_form_value(request.form.get("hotdeal_safe_zone", ""))
-        signature_footer_safe_zone = truthy_form_value(request.form.get("signature_footer_safe_zone", ""))
-        visual_types = resolve_visual_types(visual_type, platform_pack)
-        pack_summary = get_pack_summary(platform_pack, visual_types)
-        generation_note = build_business_context_note(
-            note=note,
-            platform_pack=platform_pack,
-            brand_name=brand_name,
-            brand_colors=brand_colors,
-            brand_tone=brand_tone,
-        )
 
         # User info comes from static/app.js after login.
         user_id = request.form.get("user_id", "").strip()
@@ -1743,21 +1367,19 @@ def generate():
         if not food_images:
             return jsonify({"success": False, "error": "Please upload food image."}), 400
 
-        # Platform packs are dish-level kits. Product-only mode supports batch upload.
-        if platform_pack != "single" or visual_type.lower() != "product":
+        # Poster and Banner are single-output layouts. Product supports batch upload.
+        if visual_type.lower() != "product":
             food_images = food_images[:1]
 
-        required_generations = len(food_images) * len(visual_types)
-
-        # Prevent a trial user from bypassing the limit with batch upload or platform kits.
+        # Prevent a trial user from bypassing the limit with product batch upload.
         if profile and (profile.get("plan") or "trial").lower() != "pro":
             trial_limit = int(profile.get("trial_limit") or 10)
             trial_used = int(profile.get("trial_used") or 0)
             remaining = max(0, trial_limit - trial_used)
-            if required_generations > remaining:
+            if len(food_images) > remaining:
                 return jsonify({
                     "success": False,
-                    "error": f"Your trial has {remaining} generation(s) remaining. This request needs {required_generations}. Please reduce outputs or upgrade to Pro.",
+                    "error": f"Your trial has {remaining} generation(s) remaining. Please upload {remaining} image(s) or upgrade to Pro.",
                     "limit_reached": True,
                     "limit_reason": "trial_batch_exceeds_remaining",
                     "profile": profile,
@@ -1777,90 +1399,65 @@ def generate():
 
         safe_user_folder = secure_filename(user_id) if user_id else "public"
         generated_items = []
-        quality_reports = []
 
         for idx, food_image in enumerate(food_images, start=1):
             image_path = save_upload(food_image, UPLOAD_FOLDER)
-            quality_report = assess_photo_quality(image_path)
-            quality_report["source_filename"] = Path(image_path).name
-            quality_report["batch_index"] = idx
-            quality_reports.append(quality_report)
 
-            for item_type in visual_types:
-                filename = generate_visual(
-                    image_path=image_path,
-                    logo_path=logo_path,
-                    visual_type=item_type,
-                    title=title,
-                    subtitle=subtitle,
-                    badge=badge,
-                    price=price,
-                    style=style,
-                    note=generation_note,
-                    side_path=side_path,
-                    drink_path=drink_path,
-                    hotdeal_safe_zone=hotdeal_safe_zone,
-                    signature_footer_safe_zone=signature_footer_safe_zone,
-                )
+            filename = generate_visual(
+                image_path=image_path,
+                logo_path=logo_path,
+                visual_type=visual_type,
+                title=title,
+                subtitle=subtitle,
+                badge=badge,
+                price=price,
+                style=style,
+                note=note,
+                side_path=side_path,
+                drink_path=drink_path,
+            )
 
-                local_output_path = OUTPUT_FOLDER / filename
-                local_image_url = output_url(filename)
-                local_download_url = f"/download/{filename}"
-                storage_key = f"{safe_user_folder}/{filename}"
-                storage_url = upload_to_supabase_storage(str(local_output_path), storage_key)
+            local_output_path = OUTPUT_FOLDER / filename
+            local_image_url = output_url(filename)
+            local_download_url = f"/download/{filename}"
+            storage_key = f"{safe_user_folder}/{filename}"
+            storage_url = upload_to_supabase_storage(str(local_output_path), storage_key)
 
-                image_url = storage_url or local_image_url
-                download_url = storage_url or local_download_url
-                item_meta = VISUAL_OUTPUTS[item_type]
+            image_url = storage_url or local_image_url
+            download_url = storage_url or local_download_url
 
-                item_title = title or ("Product Bundle" if (side_path or drink_path) else item_meta["label"])
-                if len(food_images) > 1:
-                    item_title = f"{item_title} #{idx}"
-                if len(visual_types) > 1:
-                    item_title = f"{item_title} - {item_meta['label']}"
+            item_title = title or ("Product Bundle" if (side_path or drink_path) else "Product Image")
+            if len(food_images) > 1:
+                item_title = f"{item_title} #{idx}"
 
-                save_design_to_supabase(
-                    user_id=user_id,
-                    user_email=user_email,
-                    image_url=image_url,
-                    download_url=download_url,
-                    visual_type=item_type,
-                    title=item_title,
-                )
+            save_design_to_supabase(
+                user_id=user_id,
+                user_email=user_email,
+                image_url=image_url,
+                download_url=download_url,
+                visual_type=visual_type,
+                title=item_title,
+            )
 
-                increment_usage(user_id)
+            increment_usage(user_id)
 
-                generated_items.append({
-                    "type": item_type,
-                    "label": item_meta["label"],
-                    "width": item_meta["width"],
-                    "height": item_meta["height"],
-                    "filename": filename,
-                    "image_url": image_url,
-                    "download_url": download_url,
-                    "storage_uploaded": bool(storage_url),
-                    "quality_score": quality_report.get("score"),
-                })
+            generated_items.append({
+                "filename": filename,
+                "image_url": image_url,
+                "download_url": download_url,
+                "storage_uploaded": bool(storage_url),
+            })
 
         updated_profile = get_or_create_profile(user_id, user_email)
         first_item = generated_items[0]
-        local_filenames = [item["filename"] for item in generated_items]
 
         return jsonify({
             "success": True,
             "filename": first_item["filename"],
             "image_url": first_item["image_url"],
             "download_url": first_item["download_url"],
-            "bundle_download_url": bundle_download_url(local_filenames),
             "items": generated_items,
             "batch_count": len(generated_items),
-            "requested_generations": required_generations,
-            "platform_pack": pack_summary,
-            "safe_zones": {
-                "hotdeal": hotdeal_safe_zone,
-                "signature_footer": signature_footer_safe_zone,
-            },
-            "quality_reports": quality_reports,
             "recent": list_recent_outputs(6),
             "storage_uploaded": first_item["storage_uploaded"],
             "profile": updated_profile,
@@ -1880,16 +1477,6 @@ def generate_social_kit():
         style = request.form.get("style", "AI Auto Detect").strip()
         note = request.form.get("note", "").strip()
         campaign_goal = request.form.get("campaign_goal", "best_seller").strip()
-        brand_name = request.form.get("brand_name", "").strip()
-        brand_colors = request.form.get("brand_colors", "").strip()
-        brand_tone = request.form.get("brand_tone", "").strip()
-        generation_note = build_business_context_note(
-            note=note,
-            platform_pack="social_media",
-            brand_name=brand_name,
-            brand_colors=brand_colors,
-            brand_tone=brand_tone,
-        )
 
         user_id = request.form.get("user_id", "").strip()
         user_email = request.form.get("user_email", "").strip()
@@ -1932,9 +1519,6 @@ def generate_social_kit():
             return jsonify({"success": False, "error": "Please upload main food image."}), 400
 
         image_path = save_upload(food_file, UPLOAD_FOLDER)
-        quality_report = assess_photo_quality(image_path)
-        quality_report["source_filename"] = Path(image_path).name
-        quality_report["batch_index"] = 1
 
         logo_path = ""
         if logo_file and logo_file.filename:
@@ -1961,7 +1545,7 @@ def generate_social_kit():
                 badge=badge,
                 price=price,
                 style=style,
-                note=generation_note,
+                note=note,
                 campaign_goal=campaign_goal,
                 side_path=side_path,
                 drink_path=drink_path,
@@ -2008,8 +1592,6 @@ def generate_social_kit():
             "success": True,
             "items": generated_items,
             "batch_count": len(generated_items),
-            "bundle_download_url": bundle_download_url([item["filename"] for item in generated_items]),
-            "quality_reports": [quality_report],
             "profile": updated_profile,
         })
 
@@ -2080,61 +1662,6 @@ def download(filename):
         return jsonify({"success": False, "error": "File not found."}), 404
 
     return send_file(path, as_attachment=True, download_name=filename)
-
-
-@app.route("/download-bundle")
-def download_bundle():
-    raw_files = request.args.get("files", "")
-    include_jpg = request.args.get("jpg", "1") != "0"
-    filenames = []
-
-    for item in raw_files.split(","):
-        safe_name = secure_filename(Path(item).name)
-        if safe_name and safe_name not in filenames:
-            filenames.append(safe_name)
-
-    if not filenames:
-        return jsonify({"success": False, "error": "No files selected."}), 400
-
-    zip_buffer = io.BytesIO()
-    added = 0
-
-    with zipfile.ZipFile(zip_buffer, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
-        manifest_lines = [
-            "Food AI Studio Delivery Pack",
-            "PNG files are original generated assets.",
-            "JPG files are platform-friendly copies for merchant upload.",
-            "",
-        ]
-
-        for filename in filenames:
-            path = OUTPUT_FOLDER / filename
-            if not path.exists() or not path.is_file():
-                continue
-
-            bundle.write(path, arcname=f"png/{filename}")
-            manifest_lines.append(f"png/{filename}")
-            added += 1
-
-            if include_jpg and path.suffix.lower() == ".png":
-                try:
-                    with Image.open(path) as img:
-                        jpg_io = io.BytesIO()
-                        img.convert("RGB").save(jpg_io, format="JPEG", quality=92, optimize=True)
-                        jpg_name = f"{path.stem}.jpg"
-                        bundle.writestr(f"jpg/{jpg_name}", jpg_io.getvalue())
-                        manifest_lines.append(f"jpg/{jpg_name}")
-                except Exception as e:
-                    manifest_lines.append(f"JPG conversion skipped for {filename}: {e}")
-
-        bundle.writestr("README.txt", "\n".join(manifest_lines))
-
-    if added == 0:
-        return jsonify({"success": False, "error": "Selected files were not found."}), 404
-
-    zip_buffer.seek(0)
-    bundle_name = f"food-ai-delivery-pack-{int(time.time())}.zip"
-    return send_file(zip_buffer, mimetype="application/zip", as_attachment=True, download_name=bundle_name)
 
 
 # ======================================================
@@ -2216,7 +1743,6 @@ def health():
         "poster_size": f"{POSTER_W}x{POSTER_H}",
         "product_size": f"{PRODUCT_W}x{PRODUCT_H}",
         "banner_size": f"{BANNER_W}x{BANNER_H}",
-        "platform_packs": PLATFORM_PACKS,
     })
 
 

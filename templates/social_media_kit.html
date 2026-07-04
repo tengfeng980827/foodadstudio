@@ -16,25 +16,26 @@
       --brand-primary-soft:#E0F7FA;
       --brand-primary-soft-2:#B2EBF2;
       --brand-primary-glow:rgba(0,172,193,.18);
+      --brand-secondary:#D22928;
       --text-dark:#111827;
     }
     *{box-sizing:border-box}
     body{
       font-family:'Inter','Noto Sans SC',system-ui,sans-serif;
-      background:radial-gradient(circle at top left,rgba(0,172,193,.18),transparent 30%),linear-gradient(180deg,#F4FBFC 0%,#FFFFFF 45%,#F3FAFB 100%);
+      background:radial-gradient(circle at top left,rgba(0,172,193,.20),transparent 32%),radial-gradient(circle at top right,rgba(0,96,100,.12),transparent 34%),linear-gradient(180deg,#F4FBFC 0%,#FFFFFF 45%,#F3FAFB 100%);
       color:var(--text-dark);
     }
-    .glass{background:rgba(255,255,255,.86);backdrop-filter:blur(18px);border:1px solid rgba(224,247,250,.88);box-shadow:0 24px 80px rgba(0,96,100,.10)}
+    .glass{background:rgba(255,255,255,.84);backdrop-filter:blur(18px);border:1px solid rgba(224,247,250,.88);box-shadow:0 24px 80px rgba(0,96,100,.10)}
     .soft-card{background:rgba(255,255,255,.95);border:1px solid rgba(178,235,242,.70);box-shadow:0 18px 50px rgba(0,96,100,.07)}
     .brand-logo{background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-mid),var(--brand-primary-bright))}
     .brand-text{color:var(--brand-primary)}
     .field{width:100%;border-radius:18px;border:1px solid #dbecef;background:#fff;padding:14px 16px;outline:none;transition:.2s ease;font-size:15px}
     .field:focus{border-color:var(--brand-primary-mid);box-shadow:0 0 0 4px var(--brand-primary-glow)}
     .label{display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#374151}
-    .btn-primary{display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-mid),var(--brand-primary-bright));color:white;border-radius:18px;padding:15px 18px;font-weight:900;box-shadow:0 16px 38px rgba(0,96,100,.24);transition:.2s ease}
+    .btn-primary{background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-mid),var(--brand-primary-bright));color:white;border-radius:18px;padding:15px 18px;font-weight:900;box-shadow:0 16px 38px rgba(0,96,100,.24);transition:.2s ease}
     .btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 20px 45px rgba(0,96,100,.32)}
     .btn-primary:disabled{opacity:.6;cursor:not-allowed}
-    .btn-secondary{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(0,96,100,.26);background:white;color:var(--brand-primary);border-radius:18px;padding:15px 18px;font-weight:800;transition:.2s ease}
+    .btn-secondary{border:1px solid rgba(0,96,100,.26);background:white;color:var(--brand-primary);border-radius:18px;padding:15px 18px;font-weight:800;transition:.2s ease}
     .btn-secondary:hover:not(:disabled){background:var(--brand-primary);color:white;transform:translateY(-1px)}
     .upload-button{border:1px solid rgba(0,96,100,.22);color:var(--brand-primary);background:var(--brand-primary-soft)}
     .upload-button:hover{border-color:var(--brand-primary);background:var(--brand-primary-soft-2)}
@@ -66,9 +67,9 @@
 
       <section class="mb-6 grid gap-4 lg:grid-cols-[1fr_420px]">
         <div class="soft-card rounded-[32px] p-6 md:p-8">
-          <p class="brand-text mb-2 text-sm font-extrabold">一键社媒素材包</p>
+          <p class="brand-text mb-2 text-sm font-extrabold">高级玩法 ⭐</p>
           <h2 class="text-3xl font-black leading-tight tracking-tight md:text-5xl">Social Media Kit</h2>
-          <p class="mt-4 max-w-2xl text-sm leading-7 text-gray-500 md:text-base">上传一张食物图，自动生成 Instagram Feed、Portrait、Story / WhatsApp Status 和 Facebook Ad，适合餐厅老板快速做新品、促销和套餐宣传。</p>
+          <p class="mt-4 max-w-2xl text-sm leading-7 text-gray-500 md:text-base">上传一张食物图，AI 自动生成 Instagram Feed、Portrait Post、Story / WhatsApp Status 和 Facebook Ad。适合餐厅老板快速做整套营销素材。</p>
         </div>
         <div class="soft-card rounded-[32px] p-6">
           <p class="text-sm font-black text-gray-400">Outputs</p>
@@ -93,16 +94,6 @@
                   <p id="foodImageSubText" class="mt-1 text-xs text-gray-400">PNG / JPG supported</p>
                 </div>
               </label>
-              <div id="photoQualityPanel" class="mt-3 hidden rounded-2xl bg-white p-4">
-                <div class="flex items-center justify-between gap-3">
-                  <div>
-                    <p class="text-xs font-black uppercase text-gray-400">Photo Check</p>
-                    <p id="photoQualitySummary" class="mt-1 text-sm font-bold text-gray-700"></p>
-                  </div>
-                  <div id="photoQualityScore" class="brand-text text-2xl font-black">--</div>
-                </div>
-                <ul id="photoQualityList" class="mt-3 space-y-1 text-xs font-medium text-gray-500"></ul>
-              </div>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -176,25 +167,9 @@
               </select>
             </div>
 
-            <div class="rounded-3xl bg-[#F2FBFC] p-4">
-              <label class="label">Brand Kit Optional</label>
-              <div class="space-y-3">
-                <input class="field" name="brand_name" placeholder="餐厅名，例如：Ah Seng Kopitiam" />
-                <input class="field" name="brand_colors" placeholder="品牌色，例如：红色 + 黄色 / teal + white" />
-                <select class="field" name="brand_tone">
-                  <option value="">选择品牌感觉</option>
-                  <option>Local Malaysian / 本地亲切</option>
-                  <option>Modern Clean / 现代干净</option>
-                  <option>Premium Restaurant / 高级餐厅</option>
-                  <option>Street Food Energy / 街边美食活力</option>
-                  <option>Minimal Delivery / 外卖平台干净图</option>
-                </select>
-              </div>
-            </div>
-
             <div>
               <label class="label">备注 / Outcome Requirement</label>
-              <textarea class="field min-h-[100px] resize-none" name="note" placeholder="例如：我要高级感、适合 IG Story、突出套餐价值、背景干净、不要太多装饰"></textarea>
+              <textarea class="field min-h-[100px] resize-none" name="note" placeholder="例如：我要高级感、适合IG Story、突出套餐价值、背景干净、不要太多装饰"></textarea>
             </div>
 
             <div>
@@ -218,7 +193,7 @@
                 <h3 class="text-xl font-black">Kit Preview</h3>
                 <p class="text-sm text-gray-500">生成后会显示你选择的全部社媒尺寸。</p>
               </div>
-              <button id="downloadAllButton" type="button" class="btn-secondary px-4 py-3 text-sm" disabled>Download ZIP</button>
+              <button id="downloadAllButton" type="button" class="btn-secondary px-4 py-3 text-sm" disabled>Download All</button>
             </div>
             <div id="outputGrid" class="grid gap-4 md:grid-cols-2">
               <div class="output-card"><div class="output-empty checker grid place-items-center p-6 text-center"><div><p class="font-black">Feed</p><p class="mt-1 text-xs text-gray-400">1080×1080</p></div></div></div>
