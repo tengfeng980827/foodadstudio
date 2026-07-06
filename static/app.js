@@ -309,7 +309,7 @@ function updateFormMode() {
 
   if (titleInput) {
     titleInput.required = !isSingleProduct;
-    titleInput.placeholder = isSingleProduct ? "Product 可不填标题" : "例如：香煎猪扒饭";
+    titleInput.placeholder = isSingleProduct ? "Product 标签：Chef Recommend / Must Try（可不填）" : "例如：香煎猪扒饭";
   }
 
   if (platformPackHint) {
@@ -489,9 +489,6 @@ function showDeliveryPack(data) {
 
   deliveryPackPanel.classList.remove("hidden");
   deliveryPackTitle.textContent = pack?.label || "Generated Assets";
-  const activeSafeZones = [];
-  if (data.safe_zones?.hotdeal) activeSafeZones.push("HotDeals safe zone");
-  if (data.safe_zones?.signature_footer) activeSafeZones.push("Signature footer safe zone");
 
   deliveryPackItems.innerHTML = items.map(item => `
     <div class="delivery-card">
@@ -499,12 +496,7 @@ function showDeliveryPack(data) {
       <p class="mt-1 text-xs font-semibold text-gray-500">${item.width || "-"}×${item.height || "-"}</p>
       <p class="mt-1 text-xs font-medium text-gray-400">${escapeHtml(item.type || "")}</p>
     </div>
-  `).join("") + (activeSafeZones.length ? `
-    <div class="delivery-card md:col-span-3">
-      <p class="text-xs font-black uppercase text-gray-400">Active overlay protection</p>
-      <p class="mt-1 text-sm font-bold text-gray-800">${escapeHtml(activeSafeZones.join(" + "))}</p>
-    </div>
-  ` : "");
+  `).join("");
 
   bundleDownloadButton.disabled = !latestBundleDownloadUrl;
 }
@@ -555,12 +547,6 @@ function showGeneratedImage(data) {
 }
 
 async function generateVisual() {
-  if (!isLoggedIn()) {
-    openAuthModal();
-    showAuthMessage("请先登录或注册后再生成图片。");
-    return;
-  }
-
   if (!foodImageInput.files || !foodImageInput.files[0]) {
     showError("Please upload food image first.");
     return;

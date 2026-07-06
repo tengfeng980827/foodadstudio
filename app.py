@@ -293,7 +293,7 @@ def resize_exact(image_path: str, target_w: int, target_h: int) -> None:
     img.save(image_path)
 
 
-def overlay_logo(image_path: str, logo_path: str, visual_type: str) -> None:
+def overlay_logo(image_path: str, logo_path: str, visual_type: str, hotdeal_safe_zone: bool = False) -> None:
     if not logo_path or not os.path.exists(logo_path):
         return
 
@@ -308,6 +308,11 @@ def overlay_logo(image_path: str, logo_path: str, visual_type: str) -> None:
             max_h = 90
             margin_right = 36
             margin_top = 28
+        elif hotdeal_safe_zone:
+            max_w = int(bw * 0.12)
+            max_h = int(bh * 0.08)
+            margin_right = int(bw * 0.02)
+            margin_top = int(bh * 0.04)
         else:
             max_w = int(bw * 0.22)
             max_h = int(bh * 0.10)
@@ -721,6 +726,44 @@ TYPOGRAPHY REQUIREMENTS:
 """
 
 
+def poster_layout_zones(
+    hotdeal_safe_zone: bool = False,
+    signature_footer_safe_zone: bool = False,
+) -> dict[str, str]:
+    """Return poster layout zones. Normal mode stays identical; HotDeals mode shifts copy below the app pill."""
+    zones = {
+        "title": "X 70 to 620, Y 80 to 250",
+        "subtitle": "X 70 to 620, Y 255 to 345",
+        "logo": "X 800 to 1030, Y 60 to 210",
+        "badge": "X 70 to 420, Y 830 to 1010",
+        "price": "X 650 to 1010, Y 830 to 1010",
+        "food": "X 360 to 980, Y 280 to 860",
+    }
+
+    if hotdeal_safe_zone:
+        zones.update({
+            # Based on the GrabFood mobile card reference: the orange HOTDEALS pill sits
+            # across the upper-left/top-middle of a square food image.
+            "hotdeal_reservation": "X 0 to 940, Y 0 to 450",
+            "hotdeal_pill": "X 70 to 940, Y 55 to 420",
+            "title": "X 70 to 600, Y 450 to 580",
+            "subtitle": "X 70 to 600, Y 580 to 640",
+            "logo": "X 910 to 1060, Y 35 to 180",
+            "badge": "X 70 to 420, Y 850 to 960",
+            "food": "X 600 to 1010, Y 365 to 790",
+        })
+
+    if signature_footer_safe_zone:
+        zones.update({
+            "signature_footer_reservation": "X 0 to 1080, Y 880 to 1080",
+            "badge": "X 70 to 420, Y 690 to 835",
+            "price": "X 650 to 1010, Y 690 to 835",
+            "food": "X 600 to 1010, Y 365 to 780" if hotdeal_safe_zone else "X 360 to 980, Y 280 to 840",
+        })
+
+    return zones
+
+
 def grabfood_overlay_safe_zone_rules(
     visual_type: str,
     hotdeal_safe_zone: bool = False,
@@ -737,20 +780,31 @@ def grabfood_overlay_safe_zone_rules(
     visual_type = (visual_type or "poster").lower()
 
     if visual_type == "product":
+        if hotdeal_safe_zone:
+            product_food_area = "X 110 to 630, Y 275 to 555"
+        else:
+            product_food_area = "X 80 to 640, Y 90 to 580"
+        if signature_footer_safe_zone:
+            product_food_area = "X 110 to 630, Y 275 to 545" if hotdeal_safe_zone else "X 80 to 640, Y 90 to 570"
+
         rules = [
             "GRABFOOD OVERLAY SAFE ZONE MODE FOR 1:1 MENU IMAGE:",
             "- These are external app overlay reservation zones, not visible design boxes.",
             "- Do not draw safe zone guides, boxes, rulers, dashed lines, or app UI.",
+            "- Do not generate the HOTDEALS button, GrabFood UI, platform badge, safe-zone template, or guide overlay.",
             "- Keep the food accurate and appetizing while leaving reserved overlay space clean.",
         ]
         if hotdeal_safe_zone:
             rules.extend([
                 "",
                 "HOTDEALS OVERLAY RESERVATION:",
-                "- GrabFood commonly places a HOTDEALS-style orange pill near the top-left of the menu image.",
-                "- Reserve X 0 to 260, Y 0 to 105 on the 720x720 product canvas for that app overlay.",
-                "- No important food, garnish, steam, container rim, logo, text, badge, or bright detail inside X 0 to 260, Y 0 to 105.",
-                "- Place the main food identity mostly below Y 125 and away from the top-left overlay zone.",
+                "- GrabFood mobile cards can place an orange HOTDEALS pill across the upper-left/top-middle of the menu image.",
+                "- Reserve X 0 to 615, Y 0 to 260 on the 720x720 product canvas for that future app overlay.",
+                "- Treat the likely orange pill footprint as X 45 to 615, Y 35 to 240, with extra padding around it.",
+                "- No important food, garnish, steam, container rim, sauce, logo, text, badge, or bright detail inside X 0 to 615, Y 0 to 260.",
+                "- Keep the reserved area as simple background / negative space only.",
+                "- Place the main food identity mostly below Y 275 and away from the upper-left overlay zone.",
+                "- Make the product about 20% smaller than normal HotDeals-off product composition.",
             ])
         if signature_footer_safe_zone:
             rules.extend([
@@ -759,36 +813,47 @@ def grabfood_overlay_safe_zone_rules(
                 "- GrabFood Signature-style footer/ribbon can appear near the bottom edge of the menu image.",
                 "- Reserve X 0 to 720, Y 595 to 720 on the 720x720 product canvas for the app footer overlay.",
                 "- No important food, container edge, garnish, text, logo, steam, or shadow detail inside X 0 to 720, Y 595 to 720.",
-                "- Keep the full food product visible mainly inside X 80 to 640, Y 125 to 580.",
+                "- Keep the full food product visible mainly inside the adjusted product food area.",
             ])
         rules.extend([
             "",
             "PRODUCT SAFE COMPOSITION OVERRIDE:",
             "- If overlay reservations are active, shrink and lift the food slightly rather than cropping it.",
-            "- Important food details must remain inside the unblocked safe area.",
+            f"- Important food details must remain mainly inside {product_food_area}.",
+            "- A clean upper-left background is better than a beautiful garnish that will be covered by the app label.",
         ])
         return "\n".join(rules)
+
+    zones = poster_layout_zones(hotdeal_safe_zone, signature_footer_safe_zone)
 
     rules = [
         "GRABFOOD OVERLAY SAFE ZONE MODE FOR 1:1 POSTER:",
         "- These rules are active only because the merchant selected HotDeals and/or Signature Footer safe zones.",
         "- The normal poster formula still applies, but these overlay reservation rules have higher priority.",
         "- Do not draw safe zone guides, colored boxes, rulers, dashed lines, or app UI in the final image.",
-        "- Do not create fake GrabFood logos or fake platform interface elements.",
+        "- Do not create fake GrabFood logos, fake HOTDEALS buttons, fake platform interface elements, or visible safe-zone templates.",
     ]
 
     if hotdeal_safe_zone:
         rules.extend([
             "",
             "HOTDEALS OVERLAY RESERVATION:",
-            "- GrabFood commonly places the HOTDEALS pill/tag over the upper-left of food cards.",
-            "- Reserve X 0 to 360, Y 0 to 155 on the 1080x1080 canvas for that app overlay.",
+            "- The provided GrabFood reference shows the orange HOTDEALS pill over the upper-left/top-middle of the food card.",
+            f"- Reserve {zones['hotdeal_reservation']} on the 1080x1080 canvas for that future app overlay.",
+            f"- Treat the likely visible pill footprint as {zones['hotdeal_pill']}, with extra padding around it.",
             "- The reserved HotDeals overlay zone must contain only simple background / negative space.",
-            "- No title, subtitle, badge, price, logo, food, plate, bowl, cup, garnish, steam, smoke, or important decoration inside X 0 to 360, Y 0 to 155.",
+            f"- No title, subtitle, badge, price, logo, food, plate, bowl, cup, garnish, steam, smoke, bright prop, or important decoration inside {zones['hotdeal_reservation']}.",
             "- Shift the AI-designed main title below the HotDeals reservation.",
-            "- When HotDeals is active, the main title must stay inside X 70 to 620, Y 165 to 300.",
-            "- When HotDeals is active, the subtitle must stay inside X 70 to 620, Y 305 to 390.",
-            "- When HotDeals is active, important food details should stay below Y 390 unless they are safely on the right side and do not touch the title.",
+            f"- When HotDeals is active, the main title must stay inside {zones['title']}.",
+            f"- When HotDeals is active, the subtitle must stay inside {zones['subtitle']}.",
+            f"- When HotDeals is active, the restaurant logo clean zone is reduced to the far top-right only: {zones['logo']}.",
+            "- Keep the main title in the left-middle of the poster, not the top-left and not the bottom-left.",
+            "- The subtitle must sit directly below the main title, with clear spacing and no overlap.",
+            "- No title letters, title shadows, subtitle letters, or decorative title strokes may appear above Y 440 or below Y 650.",
+            f"- Reserve the lower-left badge area {zones['badge']} for the user badge if provided.",
+            "- Do not place food, title, subtitle, steam, or decoration inside the lower-left badge area.",
+            "- Important food details should stay on the right side and not touch the title, subtitle, or badge area.",
+            "- Make the hero food roughly 20% smaller than the normal poster composition so the left-middle title and lower-left badge have clear breathing room.",
         ])
 
     if signature_footer_safe_zone:
@@ -796,12 +861,12 @@ def grabfood_overlay_safe_zone_rules(
             "",
             "SIGNATURE FOOTER OVERLAY RESERVATION:",
             "- GrabFood Signature-style footer/ribbon can appear at the bottom of a food card, often bottom-right or across the lower edge.",
-            "- Reserve X 0 to 1080, Y 880 to 1080 on the 1080x1080 canvas for that app footer overlay.",
+            f"- Reserve {zones['signature_footer_reservation']} on the 1080x1080 canvas for that app footer overlay.",
             "- The reserved Signature Footer zone must contain only simple background / negative space.",
-            "- No title, subtitle, badge, price, logo, food, plate, bowl, cup, garnish, steam, smoke, or important decoration inside X 0 to 1080, Y 880 to 1080.",
+            f"- No title, subtitle, badge, price, logo, food, plate, bowl, cup, garnish, steam, smoke, or important decoration inside {zones['signature_footer_reservation']}.",
             "- Keep important food details above Y 860.",
-            "- If a user badge is provided, place it inside X 70 to 420, Y 700 to 835.",
-            "- If a price is provided, place it inside X 650 to 1010, Y 700 to 835.",
+            f"- If a user badge is provided, place it inside {zones['badge']}.",
+            f"- If a price is provided, place it inside {zones['price']}.",
             "- Badge and price must not overlap the future footer reservation.",
         ])
 
@@ -812,7 +877,9 @@ def grabfood_overlay_safe_zone_rules(
         "- Creative typography must fit inside the adjusted safe areas and must not enter any overlay reservation zone.",
         "- If the title, badge, or price is long, reduce size or use tighter layout instead of entering the overlay reservation zones.",
         "- Food must remain recognizable and appetizing, but it must not sit under the HotDeals or Signature Footer overlay reservations.",
-        "- If HotDeals and Signature Footer are both active, keep the hero food mainly inside X 360 to 980, Y 390 to 850, and keep title/subtitle inside the adjusted safe areas.",
+        f"- Keep the hero food mainly inside {zones['food']} when overlay reservations are active.",
+        "- If HotDeals is active, prioritize a readable left-middle title and clean lower-left badge area over making the food large; the upper-left and upper-middle canvas should stay quiet.",
+        "- The final artwork should not show the reserved app overlays; it should simply compose around where the delivery app will place them.",
     ])
     return "\n".join(rules)
 
@@ -821,24 +888,21 @@ def poster_absolute_negative_rules(
     hotdeal_safe_zone: bool = False,
     signature_footer_safe_zone: bool = False,
 ) -> str:
-    title_zone = "X 70 to 620, Y 165 to 300" if hotdeal_safe_zone else "X 70 to 620, Y 80 to 250"
-    subtitle_zone = "X 70 to 620, Y 305 to 390" if hotdeal_safe_zone else "X 70 to 620, Y 255 to 345"
-    badge_zone = "X 70 to 420, Y 700 to 835" if signature_footer_safe_zone else "X 70 to 420, Y 830 to 1010"
-    price_zone = "X 650 to 1010, Y 700 to 835" if signature_footer_safe_zone else "X 650 to 1010, Y 830 to 1010"
+    zones = poster_layout_zones(hotdeal_safe_zone, signature_footer_safe_zone)
 
     rules = [
         "ABSOLUTE NEGATIVE RULES:",
-        f"- No title outside {title_zone}.",
-        f"- No subtitle outside {subtitle_zone}.",
-        f"- No badge outside {badge_zone}.",
-        f"- No price outside {price_zone}.",
-        "- No food, text, steam, smoke or decoration in logo clean zone X 800 to 1030, Y 60 to 210.",
+        f"- No title outside {zones['title']}.",
+        f"- No subtitle outside {zones['subtitle']}.",
+        f"- No badge outside {zones['badge']}.",
+        f"- No price outside {zones['price']}.",
+        f"- No food, text, steam, smoke or decoration in logo clean zone {zones['logo']}.",
     ]
 
     if hotdeal_safe_zone:
-        rules.append("- No food, text, badge, price, logo, steam, smoke or decoration in HotDeals overlay reservation X 0 to 360, Y 0 to 155.")
+        rules.append(f"- No food, text, badge, price, logo, steam, smoke or decoration in HotDeals overlay reservation {zones['hotdeal_reservation']}.")
     if signature_footer_safe_zone:
-        rules.append("- No food, text, badge, price, logo, steam, smoke or decoration in Signature Footer overlay reservation X 0 to 1080, Y 880 to 1080.")
+        rules.append(f"- No food, text, badge, price, logo, steam, smoke or decoration in Signature Footer overlay reservation {zones['signature_footer_reservation']}.")
 
     rules.extend([
         "- No safe area guide lines.",
@@ -1086,6 +1150,18 @@ def build_poster_prompt(
     hotdeal_safe_zone: bool = False,
     signature_footer_safe_zone: bool = False,
 ) -> str:
+    zones = poster_layout_zones(hotdeal_safe_zone, signature_footer_safe_zone)
+    hotdeal_food_scale_rule = (
+        "- HOTDEALS MODE: make the food hero about 20% smaller than normal, keep it compact on the right side, and leave clear space for the left-middle title plus the lower-left badge area."
+        if hotdeal_safe_zone
+        else ""
+    )
+    hotdeal_title_floor_rule = (
+        "- HOTDEALS MODE: place the main title in the left-middle of the poster, inside X 70 to 600 and Y 450 to 580. Put the subtitle directly below it inside X 70 to 600 and Y 580 to 640. No title/subtitle/shadow/decoration above Y 440 or below Y 650. Keep the lower-left badge area X 70 to 420 and Y 850 to 960 clean for the badge."
+        if hotdeal_safe_zone
+        else ""
+    )
+
     return f"""
 Analyze the uploaded food image carefully.
 
@@ -1159,29 +1235,30 @@ If the uploaded item is cold food, dessert, or drink, do not add hot steam unles
 
 CRITICAL POSTER CANVAS MAP:
 - Full poster canvas: 1080 wide × 1080 high.
-- Main title safe area: X 70 to 620, Y 80 to 250.
-- Subtitle safe area: X 70 to 620, Y 255 to 345.
-- Logo clean zone: X 800 to 1030, Y 60 to 210.
-- Badge safe area: X 70 to 420, Y 830 to 1010.
-- Price safe area: X 650 to 1010, Y 830 to 1010.
-- Food hero area: X 360 to 980, Y 280 to 860.
+- Main title safe area: {zones['title']}.
+- Subtitle safe area: {zones['subtitle']}.
+- Logo clean zone: {zones['logo']}.
+- Badge safe area: {zones['badge']}.
+- Price safe area: {zones['price']}.
+- Food hero area: {zones['food']}.
 
 FIXED POSTER LAYOUT:
-TOP LEFT:
-- Main title must be in the upper-left area.
-- Main title must stay inside X 70 to 620 and Y 80 to 250.
+TITLE AREA:
+- Main title must be in the assigned title area.
+- Main title must stay inside {zones['title']}.
 - Main title must not cover the food.
 - If title is long, wrap it into maximum 2 lines and reduce font size automatically.
+{hotdeal_title_floor_rule}
 
 SUBTITLE:
 - Subtitle must be directly below the main title only if provided.
-- Subtitle must stay inside X 70 to 620 and Y 255 to 345.
+- Subtitle must stay inside {zones['subtitle']}.
 - Subtitle must not cover the food.
 - If subtitle is empty, do not create subtitle or any extra tagline.
 
 TOP RIGHT LOGO SAFE AREA:
 - Logo will be overlaid later by code.
-- Keep X 800 to 1030 and Y 60 to 210 completely clean.
+- Keep {zones['logo']} completely clean.
 - This zone must contain only simple background / negative space.
 - No food.
 - No text.
@@ -1194,8 +1271,9 @@ TOP RIGHT LOGO SAFE AREA:
 
 FOOD HERO:
 - Food should be the hero visual.
-- Food should be placed mainly inside X 360 to 980 and Y 280 to 860.
+- Food should be placed mainly inside {zones['food']}.
 - Food may extend slightly if visually natural, but must not cover title, subtitle, logo, badge, or price.
+{hotdeal_food_scale_rule}
 - Keep the full plate, bowl, box, cup, or important food parts visible.
 - Do not crop the main product.
 - Do not place important food under the title area.
@@ -1203,14 +1281,14 @@ FOOD HERO:
 
 BOTTOM LEFT BADGE:
 - Badge must be at the bottom-left only if provided.
-- Badge must stay inside X 70 to 420 and Y 830 to 1010.
+- Badge must stay inside {zones['badge']}.
 - Badge must not cover food.
 - Badge must not overlap price.
 - If badge is empty, do not create badge, sticker, ribbon, label, or placeholder.
 
 BOTTOM RIGHT PRICE:
 - Price must be at the bottom-right only if provided.
-- Price must stay inside X 650 to 1010 and Y 830 to 1010.
+- Price must stay inside {zones['price']}.
 - Price must not cover food.
 - Price must not overlap badge.
 - If price is empty, do not create price, currency, discount, number, price box, or placeholder.
@@ -1266,6 +1344,7 @@ USER TEXT:
 
 def build_product_prompt(
     style: str,
+    title: str = "",
     note: str = "",
     has_side: bool = False,
     has_drink: bool = False,
@@ -1274,6 +1353,44 @@ def build_product_prompt(
 ) -> str:
     side_rule = "A side/snack image is provided. Use the uploaded side/snack as a real supporting item. Place it behind the main dish, slightly to one side, smaller than the main dish." if has_side else "No side/snack image is provided. Do not invent any side/snack."
     drink_rule = "A drink image is provided. Use the uploaded drink as a real supporting item. Place it behind the main dish, slightly to one side, smaller than the main dish." if has_drink else "No drink image is provided. Do not invent any drink."
+    product_tag = clean_text(title)
+    product_tag_output_rule = (
+        f'- One designed product recommendation label is allowed because the user provided a product title tag: "{product_tag}".'
+        if product_tag
+        else "- No text, no logo, no price, no badge, no watermark, no border."
+    )
+    product_tag_rules = f"""
+OPTIONAL PRODUCT TAG:
+- The user provided this exact product tag text: "{product_tag}".
+- Create exactly one premium recommendation label in the top-left area.
+- User's requested large design area is X 0 to 940, Y 0 to 450 on a 1080-style square canvas.
+- Because the final product canvas is 720x720, use the equivalent large label design area X 0 to 627, Y 0 to 300.
+- The visible label should sit mainly inside X 24 to 560, Y 28 to 210 on the final 720x720 product canvas.
+- The tag can be larger than a sticker and should feel intentionally designed, but it must not become a full poster headline.
+- The tag must be a vivid food-promo label, preferably orange, orange-red, tomato red, or warm red.
+- Use a bright solid or subtly shaded label base with tasteful depth, soft drop shadow, and premium restaurant-menu styling.
+- White, warm-white, or cream lettering is preferred for contrast; add subtle stroke/shadow if needed for readability.
+- You may add a small highlight, ribbon notch, brush edge, or layered label backing, but keep it clean and commercial.
+- Use GPT Image 2's creative typography: custom display lettering, tasteful hierarchy, subtle stroke/shadow, and polished spacing.
+- The label should be visually energetic and appetizing while the overall product background remains pure white.
+- Keep the main product fully visible. If needed, make the food about 8% to 12% smaller or shift it slightly lower/right so the designed label does not cover the product.
+- Use only the exact user-provided tag text. Do not invent extra words, discount text, platform names, fake logos, or unrelated badges.
+- Do not create any other text anywhere else in the product image.
+""" if product_tag else """
+OPTIONAL PRODUCT TAG:
+- No product tag text was provided.
+- Do not create any label, sticker, tag, badge, title, subtitle, price, or other text.
+"""
+    strict_text_rules = (
+        f'- No text except the single exact top-left product tag: "{product_tag}".\n- No random words.\n- No logo.\n- No price.\n- No extra badge or sticker beyond that one white tag.'
+        if product_tag
+        else "- No text.\n- No random words.\n- No logo.\n- No price.\n- No badge."
+    )
+    product_composition_tag_rule = (
+        "- Because a larger top-left recommendation label is active, compose the food slightly lower/right and about 8% to 12% smaller if needed, while keeping the white background clean."
+        if product_tag
+        else ""
+    )
 
     return f"""
 Analyze the uploaded food image carefully before generating.
@@ -1284,7 +1401,7 @@ FINAL OUTPUT:
 - 1:1 square product image.
 - Final file will be resized to 720px × 720px for faster generation and lighter downloads.
 - Suitable for Foodpanda menu, GrabFood menu, restaurant menu, ecommerce listing, POS system and delivery platforms.
-- No text, no logo, no price, no badge, no watermark, no border.
+{product_tag_output_rule}
 
 IMAGE RESTORATION / BLUR RECOVERY:
 - The uploaded image may be low resolution, blurry, compressed, dark, noisy, or taken from WhatsApp / screenshots.
@@ -1344,9 +1461,12 @@ PRODUCT COMPOSITION:
 - Main product should occupy about 62% to 74% of the 720×720 canvas.
 - Bundle can occupy about 68% to 80% of the canvas.
 - Leave clean white breathing space around the product.
+{product_composition_tag_rule}
 - Keep the full plate, bowl, box, cup, container and important food parts visible.
 - Do not crop important parts.
 - Do not make the food touch the canvas edges.
+
+{product_tag_rules}
 
 {grabfood_overlay_safe_zone_rules("product", hotdeal_safe_zone, signature_footer_safe_zone)}
 
@@ -1358,11 +1478,7 @@ HOT FOOD EFFECT:
 - If the item is cold food, dessert, drink, packaged product, or not clearly hot, do not add steam.
 
 STRICT NEGATIVE:
-- No text.
-- No random words.
-- No logo.
-- No price.
-- No badge.
+{strict_text_rules}
 - No hands.
 - No people.
 - No table scene.
@@ -1630,7 +1746,8 @@ def generate_visual(
     elif visual_type == "product":
         prompt = build_product_prompt(
             style,
-            note,
+            title=title,
+            note=note,
             has_side=bool(side_path),
             has_drink=bool(drink_path),
             hotdeal_safe_zone=hotdeal_safe_zone,
@@ -1668,7 +1785,7 @@ def generate_visual(
         resize_exact(str(output_path), target_w, target_h)
 
     if visual_type in {"poster", "banner"}:
-        overlay_logo(str(output_path), logo_path, visual_type)
+        overlay_logo(str(output_path), logo_path, visual_type, hotdeal_safe_zone=hotdeal_safe_zone)
 
     return filename
 

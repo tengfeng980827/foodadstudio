@@ -269,12 +269,6 @@ downloadAllButton?.addEventListener("click", function () {
 });
 
 async function generateSocialKit() {
-  if (!isLoggedIn()) {
-    alert("请先在 Product Studio 登录后再使用 Social Media Kit。");
-    window.location.href = "/";
-    return;
-  }
-
   if (!foodImageInput.files || !foodImageInput.files[0]) {
     showError("Please upload main food image first.");
     return;
